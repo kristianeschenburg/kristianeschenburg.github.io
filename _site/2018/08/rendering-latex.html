@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+
+    <title>
+        Rendering LaTex In Markdown Using Jekyll - A Rambling On
+        
+    </title>
+
+    <meta name="description"
+        content="In putting together this blog, I wanted to be able to talk about various mathematical topics that I found interesting, which inevitably lead to using LaTex i...">
+
+    <link href='https://fonts.googleapis.com/css?family=Lora:400,700,400italic,700italic' rel='stylesheet'
+        type='text/css'>
+    <link
+        href='https://fonts.googleapis.com/css?family=Open+Sans:300italic,400italic,600italic,700italic,800italic,400,300,600,700,800'
+        rel='stylesheet' type='text/css'>
+
+    <link rel="stylesheet" href="/assets/vendor/bootstrap/css/bootstrap.min.css">
+
+    <link rel="stylesheet" href="/assets/vendor/fontawesome-free/css/all.min.css">
+
+    <link rel="stylesheet" href="/assets/main.css">
+    <link rel="canonical" href="http://kristianeschenburg.github.io/2018/08/rendering-latex">
+    <link rel="alternate" type="application/rss+xml" title="A Rambling On"
+        href="/feed.xml">
+
+</head>
+
+<body>
+
+  <!-- Navigation -->
+<nav class="navbar navbar-expand-lg navbar-light fixed-top" id="mainNav">
+    <div class="container">
+        <a class="navbar-brand" href="/">A Rambling On</a>
+        <button class="navbar-toggler navbar-toggler-right" type="button" data-toggle="collapse"
+            data-target="#navbarResponsive" aria-controls="navbarResponsive" aria-expanded="false"
+            aria-label="Toggle navigation">
+            Menu
+            <i class="fa fa-bars"></i>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarResponsive">
+            <ul class="navbar-nav ml-auto">
+
+                <!-- Home -->
+                <li class="nav-item">
+                    <a class="nav-link" href="/">Home</a>
+                </li>
+                
+                <!-- Posts -->
+                <li class="nav-item">
+                    <a class="nav-link" href="/posts">Posts</a>
+                </li>
+
+                <!-- Code -->
+                <li class="nav-item">
+                    <a class="nav-link" href="/code">Code</a>
+                </li>
+
+                <!-- Resume -->
+                <li class="nav-item">
+                    <a class="nav-link" href="/resume">Resume</a>
+                </li>
+
+                <!-- About Me -->
+                <li class="nav-item">
+                    <a class="nav-link" href="/about">About</a>
+                </li>
+            </ul>
+        </div>
+    </div>
+</nav>
+
+  <!-- Page Header -->
+
+  <header class="masthead">
+    
+    <div class="overlay"></div>
+    <div class="container">
+      <div class="row">
+        <div class="col-lg-8 col-md-10 mx-auto">
+          <div class="post-heading">
+            <h1>Rendering LaTex In Markdown Using Jekyll</h1>
+            
+            <span class="meta">Posted by
+              <a href="#">Kristian M. Eschenburg</a>
+              on August 10, 2018 &middot; <span class="reading-time" title="Estimated read time">
+    
+     2 mins  read </span>
+            </span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <div class="container">
+    <div class="row">
+      <div class="col-lg-8 col-md-10 mx-auto">
+
+        <p>In putting together this blog, I wanted to be able to talk about various mathematical topics that I found interesting, which inevitably lead to using LaTex in my posts.</p>
+
+<p>I’m currently using Atom as my editor (having converted from Sublime), and needed to install a bunch of packages first.  First and foremost, I wanted to be able to render my markdown posts before hosting them on the blog, and consequentially needed a way to render LaTex.  For this, I installed a few Atom packages:</p>
+
+<ul>
+  <li><a href="https://atom.io/packages/markdown-it-preview">Markdown-Preview</a></li>
+  <li><a href="https://atom.io/packages/latex">Latex</a></li>
+  <li><a href="https://atom.io/packages/language-latex">Language-Latex</a></li>
+</ul>
+
+<p>To preview your post in Atom, you just type <code class="highlighter-rouge">ctrl+shift+M</code>, which will display both in-line and block math sections.</p>
+
+<p>However, if you build your site locally with the command <code class="highlighter-rouge">bundle exec jekyll serve</code> or push it to a remote repo, the LaTex no longer renders properly.  After Googling around a bit, I determined that this was due to the way markdown converters in Jekyll, like <strong>kramdown</strong> and <strong>redcarpet</strong>, do the conversion using MathJax – specifically, in-line math segments are not properly rendered.  I wanted a way to both preview the LaTex in Atom, and properly render it usng Jekyll.  I found two links that solved the problem for me:</p>
+
+<ul>
+  <li><a href="http://www.gastonsanchez.com/visually-enforced/opinion/2014/02/16/Mathjax-with-jekyll/">Visually Enforced</a></li>
+  <li><a href="http://www.iangoodfellow.com/blog/jekyll/markdown/tex/2016/11/07/latex-in-markdown.html">LaTeX in Jekyll</a></li>
+</ul>
+
+<p>In short, the following steps solved the problem of LaTex not rendering for me.  I’m using the <strong>minima</strong> theme, so I first found the theme directory with <code class="highlighter-rouge">bundle show minima</code>.  In this directory, I copied the <strong>./layouts/post.html</strong> to a local directory in my project folder called <strong>./_layouts/post.html</strong>.</p>
+
+<p>Within this file, I pasted the following two sections of HTML code:</p>
+
+<pre><code class="language-html:">&lt;script type="text/x-mathjax-config"&gt;
+    MathJax.Hub.Config({
+      tex2jax: {
+        skipTags: ['script', 'noscript', 'style', 'textarea', 'pre'],
+        inlineMath: [['$','$']]
+      }
+    });
+  &lt;/script&gt;
+&lt;script src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML" type="text/javascript"&gt;&lt;/script&gt;
+</code></pre>
+
+<p>And voila – building the posts now correctly renders LaTex!</p>
+
+
+        <hr>
+
+        <div class="clearfix">
+
+          
+          <a class="btn btn-primary float-left" href="/2018/05/dynamic-mode-decomposition-part-2" data-toggle="tooltip" data-placement="top" title="Exploring Dynamical Systems With DMD: Part 2">&larr; Previous<span class="d-none d-md-inline">
+              Post</span></a>
+          
+          
+          <a class="btn btn-primary float-right" href="/2018/08/custom-plugins-with-travisci" data-toggle="tooltip" data-placement="top" title="Enabling Custom Jekyll Plugins with TravisCI">Next<span class="d-none d-md-inline">
+              Post</span> &rarr;</a>
+          
+
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+
+  <!-- Footer -->
+
+<hr>
+
+<footer>
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-8 col-md-10 mx-auto">
+                <ul class="list-inline text-center">
+                    
+                    <li class="list-inline-item">
+                        <a href="mailto:keschenb@uw.edu">
+                            <span class="fa-stack fa-lg">
+                                <i class="fas fa-circle fa-stack-2x"></i>
+                                <i class="far fa-envelope fa-stack-1x fa-inverse"></i>
+                            </span>
+                        </a>
+                    </li>
+                    
+                    
+                    <li class="list-inline-item">
+                        <a href="https://twitter.com/keschh">
+                            <span class="fa-stack fa-lg">
+                                <i class="fas fa-circle fa-stack-2x"></i>
+                                <i class="fab fa-twitter fa-stack-1x fa-inverse"></i>
+                            </span>
+                        </a>
+                    </li>
+                    
+                    
+                    
+                    <li class="list-inline-item">
+                        <a href="https://www.linkedin.com/in/kristianeschenburg">
+                            <span class="fa-stack fa-lg">
+                                <i class="fas fa-circle fa-stack-2x"></i>
+                                <i class="fab fa-linkedin fa-stack-1x fa-inverse"></i>
+                            </span>
+                        </a>
+                    </li>
+                    
+                    
+                    <li class="list-inline-item">
+                        <a href="https://github.com/kristianeschenburg">
+                            <span class="fa-stack fa-lg">
+                                <i class="fas fa-circle fa-stack-2x"></i>
+                                <i class="fab fa-github fa-stack-1x fa-inverse"></i>
+                            </span>
+                        </a>
+                    </li>
+                    
+                </ul>
+                <p class="copyright text-muted">Copyright &copy; Kristian M. Eschenburg 2019</p>
+            </div>
+        </div>
+    </div>
+</footer>
+
+  
+
+<script src="/assets/vendor/jquery/jquery.min.js"></script>
+<script src="/assets/vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
+<script src="/assets/vendor/startbootstrap-clean-blog/js/clean-blog.min.js"></script>
+
+<script src="/assets/scripts.js"></script>
+
+
+
+  <!-- Global site tag (gtag.js) - Google Analytics -->
+<script async src="https://www.googletagmanager.com/gtag/js?id="></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', '');
+</script>
+
+
+
+</body>
+
+</html>

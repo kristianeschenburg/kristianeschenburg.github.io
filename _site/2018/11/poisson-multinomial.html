@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+
+    <title>
+        Relationship Between Poisson and Multinomial - A Rambling On
+        
+    </title>
+
+    <meta name="description"
+        content="In this post, I’m going to briefly cover the relationship between the Poisson distribution and the Multinomial distribution.">
+
+    <link href='https://fonts.googleapis.com/css?family=Lora:400,700,400italic,700italic' rel='stylesheet'
+        type='text/css'>
+    <link
+        href='https://fonts.googleapis.com/css?family=Open+Sans:300italic,400italic,600italic,700italic,800italic,400,300,600,700,800'
+        rel='stylesheet' type='text/css'>
+
+    <link rel="stylesheet" href="/assets/vendor/bootstrap/css/bootstrap.min.css">
+
+    <link rel="stylesheet" href="/assets/vendor/fontawesome-free/css/all.min.css">
+
+    <link rel="stylesheet" href="/assets/main.css">
+    <link rel="canonical" href="http://kristianeschenburg.github.io/2018/11/poisson-multinomial">
+    <link rel="alternate" type="application/rss+xml" title="A Rambling On"
+        href="/feed.xml">
+
+</head>
+
+<body>
+
+  <!-- Navigation -->
+<nav class="navbar navbar-expand-lg navbar-light fixed-top" id="mainNav">
+    <div class="container">
+        <a class="navbar-brand" href="/">A Rambling On</a>
+        <button class="navbar-toggler navbar-toggler-right" type="button" data-toggle="collapse"
+            data-target="#navbarResponsive" aria-controls="navbarResponsive" aria-expanded="false"
+            aria-label="Toggle navigation">
+            Menu
+            <i class="fa fa-bars"></i>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarResponsive">
+            <ul class="navbar-nav ml-auto">
+
+                <!-- Home -->
+                <li class="nav-item">
+                    <a class="nav-link" href="/">Home</a>
+                </li>
+                
+                <!-- Posts -->
+                <li class="nav-item">
+                    <a class="nav-link" href="/posts">Posts</a>
+                </li>
+
+                <!-- Code -->
+                <li class="nav-item">
+                    <a class="nav-link" href="/code">Code</a>
+                </li>
+
+                <!-- Resume -->
+                <li class="nav-item">
+                    <a class="nav-link" href="/resume">Resume</a>
+                </li>
+
+                <!-- About Me -->
+                <li class="nav-item">
+                    <a class="nav-link" href="/about">About</a>
+                </li>
+            </ul>
+        </div>
+    </div>
+</nav>
+
+  <!-- Page Header -->
+
+  <header class="masthead">
+    
+    <div class="overlay"></div>
+    <div class="container">
+      <div class="row">
+        <div class="col-lg-8 col-md-10 mx-auto">
+          <div class="post-heading">
+            <h1>Relationship Between Poisson and Multinomial</h1>
+            
+            <span class="meta">Posted by
+              <a href="#">Kristian M. Eschenburg</a>
+              on November 07, 2018 &middot; <span class="reading-time" title="Estimated read time">
+    
+     3 mins  read </span>
+            </span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <div class="container">
+    <div class="row">
+      <div class="col-lg-8 col-md-10 mx-auto">
+
+        <p>In this post, I’m going to briefly cover the relationship between the Poisson distribution and the Multinomial distribution.</p>
+
+<p>Let’s say that we have a set of independent, Poisson-distributed random variables <script type="math/tex">Y_{1}, Y_{2}... Y_{k}</script> with rate parameters <script type="math/tex">\lambda_{1}, \lambda_{2}, ...\lambda_{k}</script>.  We can model the sum of these random variables as a new random variable <script type="math/tex">N = \sum_{i=1}^{k} Y_{i}</script>.</p>
+
+<p>Let start with <script type="math/tex">k=2</script>.  We can define the distrbution of <script type="math/tex">F_{N}(n)</script> as follows:</p>
+
+<script type="math/tex; mode=display">% <![CDATA[
+\begin{align}
+&= P(N \leq n) \\
+&= P(Y_{1} + Y_{2} \leq n) \\
+&= P(Y_{1} = y_{1}, Y_{2} = n - y_{1}) \\
+&= P(Y_{1} = y_{1}) \cdot P(Y_{2} = n-y_{1}) \\
+&= \sum_{y_{1}=0}^{n} \frac{e^{-\lambda_{1}}\lambda_{1}^{y_{1}}}{y_{1}!} \cdot \frac{e^{-\lambda_{2}}\lambda_{2}^{n-y_{1}}}{(n-y_{1})!} \\
+&= e^{-(\lambda_{1}+\lambda_{2})} \sum_{y_{1}=0}^{n} \frac{\lambda_{1}^{y_{1}}\lambda_{2}^{n-y_{1}}}{y_{1}!(n-y_{1})!} \\
+&= e^{-(\lambda_{1}+\lambda_{2})} \sum_{y_{1}=0}^{n} \frac{n!}{n!}\frac{\lambda_{1}^{y_{1}}\lambda_{2}^{n-y_{1}}}{y_{1}!(n-y_{1})!} \\
+&= \frac{e^{-(\lambda_{1}+\lambda_{2})}}{n!} \sum_{y_{1}=0}^{n} {n\choose y_{1}} \lambda_{1}^{y_{1}}\lambda_{2}^{n-y_{1}}
+\end{align} %]]></script>
+
+<p>Here, we can apply the Binomial Theorem to the summation to get the following (remember that the Binomial Theorem says, for two numbers <script type="math/tex">x</script> and <script type="math/tex">y</script>, that <script type="math/tex">(x+y)^{n} = \sum_{i=0}^{n} {n \choose i}x^{i}y^{n-i}</script>):</p>
+
+<script type="math/tex; mode=display">\begin{align}
+\frac{e^{-(\lambda_{1}+\lambda_{2})}(\lambda_{1} + \lambda_{2})^{n}}{n!} \\
+\end{align}</script>
+
+<p>which we see is in fact just another Poisson distribution with rate parameter equal to <script type="math/tex">\lambda_{1} + \lambda_{2}</script>.  This shows that the sum of independent Poisson distributed random variables is also a Poisson random variable, with rate parameter equal to the sum of the univariate rates.  By induction, we see that for <script type="math/tex">k</script> independent Poisson distributed random variables <script type="math/tex">Y_{1}...Y_{k}</script>, their sum <script type="math/tex">\sum_{i=1}^{k} Y_{i} \sim Poisson(\sum_{i=1}^{k} \lambda_{i})</script>.</p>
+
+<p>Now let’s say we’re interested in modeling the conditional distribution of <script type="math/tex">(Y_{1}...Y_{k}) \mid \sum_{i=1}^{k} = n</script>.  By definition of conditional probability, we have that</p>
+
+<script type="math/tex; mode=display">% <![CDATA[
+\begin{align}
+P(\bar{Y} \mid N=n) &= \frac{P(\bar{Y} \; \cap \; N=n)}{P(N=n)} \\
+&= \frac{P(\bar{Y})}{P(N=n)}
+\end{align} %]]></script>
+
+<p>We have the following:</p>
+
+<script type="math/tex; mode=display">% <![CDATA[
+\begin{align}
+P(\bar{Y} \mid N=n) &= \frac{P(\bar{Y} \; \cap \; N=n)}{P(N=n)} \\
+&= \Big( \prod_{i=1}^{k} \frac{e^{-\lambda_{i}} \cdot \lambda_{i}^{y_{i}}}{y_{i}!} \Big) \Big/ \frac{e^{-\sum_{i=1}^{k} \lambda_{i}}(\sum_{i}^{k} \lambda_{i})^{n}}{n!} \\
+&= \Big( \frac{ e^{-\sum_{i=1}^{k}} \prod_{i=1}^{k} \lambda_{i}^{y_{i}}}{\prod_{i=1}^{k} y_{i}!} \Big) \Big/ \frac{e^{-\sum_{i=1}^{k} \lambda_{i}}(\sum_{i}^{k} \lambda_{i})^{n}}{n!} \\
+&= { n \choose y_{1}, y_{2}, ...y_{k}} \frac{\prod_{i=1}^{k} \lambda_{i}^{y_{i}}} { \sum_{i}^{k} \lambda_{i})^{n}} \\
+&= { n \choose y_{1}, y_{2}, ...y_{k}}  \prod_{i=1}^{k} \Big( \frac{ \lambda_{i} }{\sum_{i}^{k} \lambda_{i}} \Big)^{y_{i}} \\
+&\sim MultiNom(n; \frac{\lambda_{1}}{\sum_{i=1}^{k}}, \frac{\lambda_{2}}{\sum_{i=1}^{k}}, ... \frac{\lambda_{k}}{\sum_{i=1}^{k}})
+\end{align} %]]></script>
+
+<p>So finally, we see that, given the sum of independent Poisson random variables, that conditional distribution of each element of the Poisson vector is Multinomial distributed, with count probabilities scaled by the sum of the individual rates.  Importantly, we can extend these ideas (specifically the sum of independent Poisson random variables) to other models, such as splitting and merging homogenous and non-homogenous Poisson Point Processes.</p>
+
+
+        <hr>
+
+        <div class="clearfix">
+
+          
+          <a class="btn btn-primary float-left" href="/2018/10/needy_cpp" data-toggle="tooltip" data-placement="top" title="Brains, C++, and Data Science: Back to the Foundations">&larr; Previous<span class="d-none d-md-inline">
+              Post</span></a>
+          
+          
+          <a class="btn btn-primary float-right" href="/2018/11/convergence" data-toggle="tooltip" data-placement="top" title="Convergence In Probability Using Python">Next<span class="d-none d-md-inline">
+              Post</span> &rarr;</a>
+          
+
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+
+  <!-- Footer -->
+
+<hr>
+
+<footer>
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-8 col-md-10 mx-auto">
+                <ul class="list-inline text-center">
+                    
+                    <li class="list-inline-item">
+                        <a href="mailto:keschenb@uw.edu">
+                            <span class="fa-stack fa-lg">
+                                <i class="fas fa-circle fa-stack-2x"></i>
+                                <i class="far fa-envelope fa-stack-1x fa-inverse"></i>
+                            </span>
+                        </a>
+                    </li>
+                    
+                    
+                    <li class="list-inline-item">
+                        <a href="https://twitter.com/keschh">
+                            <span class="fa-stack fa-lg">
+                                <i class="fas fa-circle fa-stack-2x"></i>
+                                <i class="fab fa-twitter fa-stack-1x fa-inverse"></i>
+                            </span>
+                        </a>
+                    </li>
+                    
+                    
+                    
+                    <li class="list-inline-item">
+                        <a href="https://www.linkedin.com/in/kristianeschenburg">
+                            <span class="fa-stack fa-lg">
+                                <i class="fas fa-circle fa-stack-2x"></i>
+                                <i class="fab fa-linkedin fa-stack-1x fa-inverse"></i>
+                            </span>
+                        </a>
+                    </li>
+                    
+                    
+                    <li class="list-inline-item">
+                        <a href="https://github.com/kristianeschenburg">
+                            <span class="fa-stack fa-lg">
+                                <i class="fas fa-circle fa-stack-2x"></i>
+                                <i class="fab fa-github fa-stack-1x fa-inverse"></i>
+                            </span>
+                        </a>
+                    </li>
+                    
+                </ul>
+                <p class="copyright text-muted">Copyright &copy; Kristian M. Eschenburg 2019</p>
+            </div>
+        </div>
+    </div>
+</footer>
+
+  
+<script type="text/javascript" async src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-MML-AM_CHTML">
+</script>
+
+
+<script src="/assets/vendor/jquery/jquery.min.js"></script>
+<script src="/assets/vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
+<script src="/assets/vendor/startbootstrap-clean-blog/js/clean-blog.min.js"></script>
+
+<script src="/assets/scripts.js"></script>
+
+
+
+  <!-- Global site tag (gtag.js) - Google Analytics -->
+<script async src="https://www.googletagmanager.com/gtag/js?id="></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', '');
+</script>
+
+
+
+</body>
+
+</html>

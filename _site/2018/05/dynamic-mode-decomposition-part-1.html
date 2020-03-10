@@ -1,0 +1,352 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+
+    <title>
+        Exploring Dynamical Systems With DMD: Part 1 - A Rambling On
+        
+    </title>
+
+    <meta name="description"
+        content="In the next two posts, I want to talk briefly about an algorithm called Dynamic Mode Decomposition (DMD). DMD is a spatiotemporal modal decomposition techniq...">
+
+    <link href='https://fonts.googleapis.com/css?family=Lora:400,700,400italic,700italic' rel='stylesheet'
+        type='text/css'>
+    <link
+        href='https://fonts.googleapis.com/css?family=Open+Sans:300italic,400italic,600italic,700italic,800italic,400,300,600,700,800'
+        rel='stylesheet' type='text/css'>
+
+    <link rel="stylesheet" href="/assets/vendor/bootstrap/css/bootstrap.min.css">
+
+    <link rel="stylesheet" href="/assets/vendor/fontawesome-free/css/all.min.css">
+
+    <link rel="stylesheet" href="/assets/main.css">
+    <link rel="canonical" href="http://localhost:4444/2018/05/dynamic-mode-decomposition-part-1">
+    <link rel="alternate" type="application/rss+xml" title="A Rambling On"
+        href="/feed.xml">
+
+</head>
+
+<body>
+
+  <!-- Navigation -->
+<nav class="navbar navbar-expand-lg navbar-light fixed-top" id="mainNav">
+    <div class="container">
+        <a class="navbar-brand" href="/">A Rambling On</a>
+        <button class="navbar-toggler navbar-toggler-right" type="button" data-toggle="collapse"
+            data-target="#navbarResponsive" aria-controls="navbarResponsive" aria-expanded="false"
+            aria-label="Toggle navigation">
+            Menu
+            <i class="fa fa-bars"></i>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarResponsive">
+            <ul class="navbar-nav ml-auto">
+
+                <!-- Home -->
+                <li class="nav-item">
+                    <a class="nav-link" href="/">Home</a>
+                </li>
+                
+                <!-- Posts -->
+                <li class="nav-item">
+                    <a class="nav-link" href="/posts">Posts</a>
+                </li>
+
+                <!-- Code -->
+                <li class="nav-item">
+                    <a class="nav-link" href="/code">Code</a>
+                </li>
+
+                <!-- Resume -->
+                <li class="nav-item">
+                    <a class="nav-link" href="/resume">Resume</a>
+                </li>
+
+                <!-- About Me -->
+                <li class="nav-item">
+                    <a class="nav-link" href="/about">About</a>
+                </li>
+            </ul>
+        </div>
+    </div>
+</nav>
+
+  <!-- Page Header -->
+
+  <header class="masthead">
+    
+    <div class="overlay"></div>
+    <div class="container">
+      <div class="row">
+        <div class="col-lg-8 col-md-10 mx-auto">
+          <div class="post-heading">
+            <h1>Exploring Dynamical Systems With DMD: Part 1</h1>
+            
+            <span class="meta">Posted by
+              <a href="#">Kristian M. Eschenburg</a>
+              on May 22, 2018 &middot; <span class="reading-time" title="Estimated read time">
+    
+     10 mins  read </span>
+            </span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <div class="container">
+    <div class="row">
+      <div class="col-lg-8 col-md-10 mx-auto">
+
+        <p>In the next two posts, I want to talk briefly about an algorithm called Dynamic Mode Decomposition (DMD).  DMD is a spatiotemporal modal decomposition technique that can be used to identify spatial patterns in a signal (modes), along with the time course of these spatial patterns (dynamics).  As such, the algorithm assumes that the input data has a both a spatial and a temporal component.  We are interested in modeling <em>how</em> the system evolves over time.</p>
+
+<p>If you’d like to find more information about DMD, <a href="#schmid_dmd">(Schmid, 2010; Tu, Rowley, Luchtenburg, Brunton, &amp; Kutz, 2014)</a> are good references.  Likewise, if you’d like to follow along with the code for the following analysis, see <a href="https://github.com/kristianeschenburg/dmd">my repo</a>.  For a more in-depth analysis that applies DMD to brain activity in the resting brain, see this pre-print of a <a href="https://www.biorxiv.org/content/early/2018/06/08/343061">paper</a> my colleagues and I wrote <a href="#kunert_graf">(Kunert-Graf et al., 2018)</a>, along with the <a href="https://github.com/kunert/DMD_RSN">code</a> used for our analysis.</p>
+
+<h2 id="the-dmd-algorithm">The DMD Algorithm</h2>
+
+<p>Let’s assume that you’ve taken <script type="math/tex">n</script> measurements from specific points in space for <script type="math/tex">m</script> time points, where for now we assume that <script type="math/tex">m\lt n</script>.  For now, we’ll assume that the sampling frequency, <script type="math/tex">\omega</script>, is stable across the entire experiment.  We define our entire data matrix as</p>
+
+<script type="math/tex; mode=display">% <![CDATA[
+\begin{align}
+X = \begin{bmatrix}
+x_{n_{1},m_{1}} & x_{n_{1},m_{2}} & x_{n_{1},m_{3}} & ... \\
+x_{n_{2},m_{1}} & x_{n_{1},m_{2}} & x_{n_{2},m_{3}} & ... \\
+x_{n_{3},m_{1}} & x_{n_{1},m_{2}} & x_{n_{3},m_{3}} & ... \\
+... & ... & ... & ... \\
+\end{bmatrix}
+\in R^{n \times m}
+\end{align} %]]></script>
+
+<p>We are interested in solving for the matrix, <script type="math/tex">A \in R^{n \times n}</script>, such that</p>
+
+<script type="math/tex; mode=display">\begin{align}
+x_{t+1} = A x_{t} \; \; \forall \; \; t = 1,2,...m-1 \\
+\end{align}</script>
+
+<p>Given our full data matrix <script type="math/tex">X</script>, we can define two matrices <script type="math/tex">X^{\ast}</script> and <script type="math/tex">Y</script> such that</p>
+
+<script type="math/tex; mode=display">% <![CDATA[
+\begin{align}
+X^{\ast} &= \begin{bmatrix}
+\vert & \vert & & \vert \\
+\vec{x}_1 & \vec{x}_2  & \dots & \vec{x}_{m-1}  \\
+\vert & \vert & & \vert \\
+\end{bmatrix} \in R^{n \times (m-1)} \\
+Y &= \begin{bmatrix}
+\vert & \vert & & \vert \\
+\vec{x}_2 & \vec{x}_3  & \dots & \vec{x}_{m}  \\
+\vert & \vert & & \vert \\
+\end{bmatrix} \in R^{n \times (m-1)}
+\end{align} %]]></script>
+
+<p>so that we can write</p>
+
+<script type="math/tex; mode=display">\begin{align}
+Y = AX^{\ast}
+\end{align}</script>
+
+<p>If $n$ is small, this is relatively easy to compute – however, if <script type="math/tex">n</script> is large, as is the case when modeling temporal dynamics in resting-state MRI, it would be computationally inefficient to compute A directly.  To alleviate this, we can make use of the Singular Value Decomposition (SVD) of our predictor matrix <script type="math/tex">X^{\ast}</script>.  We define the SVD of <script type="math/tex">X^{\ast}</script> as</p>
+
+<script type="math/tex; mode=display">\begin{align}
+X^{\ast} = U \Sigma V^{T} \\
+\end{align}</script>
+
+<p>as well as the Moore-Penrose psuedo-inverse of <script type="math/tex">X^{\ast} = X^{\dagger}</script> as</p>
+
+<script type="math/tex; mode=display">\begin{align}
+X^{\dagger} = V \Sigma^{-1} U^{T} \\
+\end{align}</script>
+
+<p>such that we can write</p>
+
+<script type="math/tex; mode=display">\begin{align}
+YX^{\dagger}  = YV \Sigma^{-1} U^{T} = A X^{\ast}X^{\dagger} = A\\
+\end{align}</script>
+
+<p>Additionally, if we assume that <script type="math/tex">rank(X^{\ast}) = r \leq m</script>, then we can use the truncated SVD such that</p>
+
+<script type="math/tex; mode=display">\begin{align}
+U \in R^{n \times r} \\
+V^{T} \in R^{r \times m} \\
+\end{align}</script>
+
+<p>and</p>
+
+<script type="math/tex; mode=display">% <![CDATA[
+\begin{align}
+\Sigma = \begin{bmatrix}
+\sigma_{1} & 0 & 0 & ... \\
+0 & \sigma_{2} & 0 & ... \\
+0 & 0 & \ddots & ... \\
+\vdots & \vdots & \vdots & \sigma_{r} \\
+\end{bmatrix} \in R^{r \times r}
+\end{align} %]]></script>
+
+<p>As it stands now, we still compute an <script type="math/tex">A \in R^{n \times n}</script> matrix.  However, because we have a potentially low-rank system, we can apply a Similarity Transformation to <script type="math/tex">A</script> in order to reduce its dimensionality, without changing its spectrum.  Using our spatial singular vectors $U$, we define</p>
+
+<script type="math/tex; mode=display">% <![CDATA[
+\begin{align}
+\tilde{A} &= U^{T} A U \\
+&= U^{T} (YV \Sigma^{-1} U^{T}) U \\
+&= U^{T} Y V \Sigma^{-1} \\
+\end{align} %]]></script>
+
+<p>where <script type="math/tex">\tilde{A} \in R^{r \times r}</script>.  If we consider the above SVD, we see that $U$ is the matrix of left singular vectors, an orthogonal basis that spans <script type="math/tex">C(X^{\ast})</script>, which is an r-dimensional subspace of <script type="math/tex">R^{n}</script>.  Thus, the similarity transform represents a mapping <script type="math/tex">f(A) = U^{T} A U : R^{n} \rightarrow R^{r}</script>.  We now have a reduced-dimensional representation of our linear operator, from which we can compute the spatial modes and dynamic behavior of each mode.  First, however, because of the notion of variance captured by the singular values of our original predictor matrix, we weight <script type="math/tex">\tilde{A}</script> by the singular values as</p>
+
+<script type="math/tex; mode=display">\begin{align}
+\hat{A} = \Sigma^{\frac{1}{2}} \tilde{A} \Sigma^{\frac{1}{2}} \\
+\end{align}</script>
+
+<p>such that our computed spatial modes have been weighted by the amount they contribute to our measured signal.  We can now compute the eigendecomposition of <script type="math/tex">\hat{A}</script> as</p>
+
+<script type="math/tex; mode=display">\begin{align}
+\hat{A} W = W \Lambda \\
+\end{align}</script>
+
+<p>where the eigenvectors <script type="math/tex">W</script> are the reduced-dimension representations of our spatial modes, and the eigenvalues <script type="math/tex">\Lambda</script> capture the dynamic behavior of our spatial modes.  Because our original data matrix <script type="math/tex">X^{\ast}</script> had spatial dimension <script type="math/tex">n</script> and our eigenvectors have dimension <script type="math/tex">r</script>, we need to up-project our eigenvectors <script type="math/tex">W</script> to compute the final spatial modes, via</p>
+
+<script type="math/tex; mode=display">\begin{align}
+\Phi = Y V \Sigma^{\frac{-1}{2}}W
+\end{align}</script>
+
+<p>From the SVD of our prediction matrix <script type="math/tex">X^\ast=U \Sigma V^{T}</script>, the matrix <script type="math/tex">V \in R^{m \times r}</script> is the matrix of right singular vectors, an orthogonal basis spanning the space of <script type="math/tex">X^{\ast T}</script> (i.e. $r$ basis vectors spanning the space of the measured time courses).  Thus, we see that <script type="math/tex">H = (V \Sigma^{\frac{-1}{2}})W</script> represents a linear combination of the temporal basis vectors (a mapping from <script type="math/tex">R^{r} \rightarrow R^{m}</script>) for each eigenvector <script type="math/tex">w_{i}</script> of <script type="math/tex">W</script>, weighted by the corresponding singular value <script type="math/tex">\sigma_{i}^{\frac{-1}{2}}</script> (that acts to normalize the spatial mode amplitudes).  Finally, we see that <script type="math/tex">\Phi = X^{\ast}H</script> computes how much of each temporal basis vector is present in the measured time course at each point in space.</p>
+
+<p>Because we are modeling a dynamical system, we can compute the continuous time dynamics of our system using our spatial modes and eigenvalues as</p>
+
+<script type="math/tex; mode=display">\begin{align}
+\vec{x}(t) \approx \sum_{i=1}^{r} b_{i}\exp^{((\gamma_{i} + 2i\pi f_{i})\cdot t)} \vec{\phi}_{i}
+\end{align}</script>
+
+<p>where <script type="math/tex">\gamma_{i}</script> is a growth-decay constant and <script type="math/tex">f_{i}</script> is the frequency of oscillation of the spatial mode <script type="math/tex">\phi_{i}</script>.  We can compute these two constants as</p>
+
+<script type="math/tex; mode=display">% <![CDATA[
+\begin{align}
+\gamma_{i} &= \frac{\text{real}(\text{ln}(\lambda_{i}))}{\Delta t} \\ \\
+f_{i} &= \frac{\text{imag}(\text{ln}(\lambda_{i}))}{2\pi \Delta t}
+\end{align} %]]></script>
+
+<p>So, we can see that DMD linearizes our measured time series, by fitting what can be analogized to a “global” regression.  That is, instead of computing how a single time point predicts the next time point, which could readily be solved using the simple <strong>Normal equations</strong>, DMD computes how a matrix of time points predicts another matrix of time points that is shifted one unit of time into the future.  To this extent, DMD minimizes the Frobenius norm of</p>
+
+<script type="math/tex; mode=display">\begin{align}
+\min \limits_{A} \lVert Y - AX^{\ast} \rVert^{2}_{F} \\
+\end{align}</script>
+
+<p>However, rather than explicitly computing the matrix <script type="math/tex">A</script>, DMD computes the eigenvectors and eigenvalues of <script type="math/tex">A</script>, by utilizing the <strong>Singular Value Decomposition</strong>, along with a <strong>Similarity Transformation</strong>, in order to generate a reduced-dimensional representation of <script type="math/tex">A</script>.</p>
+
+<p>This spectral decomposition of our linear operator is of particular importance, because it sheds light on the fact the DMD models the temporal dynamics of our system using a <strong>Fourier basis</strong>.  Each spatial mode is represented by a particular Fourier frequency along and growth-decay constant that determines the future behavior of our spatial mode.  Additionally, the Fourier basis also determines what sorts of time series can be modeled using DMD – time series that are expected to have sinusoidal behavior will be more reliably modeled using DMD, whereas signals that show abrupt spike patterns might be more difficult to model.</p>
+
+<ol class="bibliography"><li><span id="schmid_dmd">Schmid, P. (2010). Dynamic Mode Decomposition of Numerical and Experimental Data. <i>Journal of Fluid Mechanics</i>, <i>656</i>, 5–28.</span></li>
+<li><span id="tu_dmd">Tu, J., Rowley, C., Luchtenburg, D., Brunton, S., &amp; Kutz, N. (2014). On Dynamic Mode Decomposition: Theory and Applications. <i>Journal of Computational Dynamics</i>.</span></li>
+<li><span id="kunert_graf">Kunert-Graf, J., Eschenburg, K., Galas, D. J., Kutz, N., Rane, S. D., &amp; Brunton, B. W. (2018). Extracting Time-Resolved Resting State Networks Using Dynamic Mode Decomposition. <i>BioRxiv</i>.</span></li></ol>
+
+
+        <hr>
+
+        <div class="clearfix">
+
+          
+          <a class="btn btn-primary float-left" href="/2018/05/multivariate-normals" data-toggle="tooltip" data-placement="top" title="Multivariate Normal Distribution">&larr; Previous<span class="d-none d-md-inline">
+              Post</span></a>
+          
+          
+          <a class="btn btn-primary float-right" href="/2018/05/dynamic-mode-decomposition-part-2" data-toggle="tooltip" data-placement="top" title="Exploring Dynamical Systems With DMD: Part 2">Next<span class="d-none d-md-inline">
+              Post</span> &rarr;</a>
+          
+
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+
+  <!-- Footer -->
+
+<hr>
+
+<footer>
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-8 col-md-10 mx-auto">
+                <ul class="list-inline text-center">
+                    
+                    <li class="list-inline-item">
+                        <a href="mailto:keschenb@uw.edu">
+                            <span class="fa-stack fa-lg">
+                                <i class="fas fa-circle fa-stack-2x"></i>
+                                <i class="far fa-envelope fa-stack-1x fa-inverse"></i>
+                            </span>
+                        </a>
+                    </li>
+                    
+                    
+                    <li class="list-inline-item">
+                        <a href="https://twitter.com/keschh">
+                            <span class="fa-stack fa-lg">
+                                <i class="fas fa-circle fa-stack-2x"></i>
+                                <i class="fab fa-twitter fa-stack-1x fa-inverse"></i>
+                            </span>
+                        </a>
+                    </li>
+                    
+                    
+                    
+                    <li class="list-inline-item">
+                        <a href="https://www.linkedin.com/in/kristianeschenburg">
+                            <span class="fa-stack fa-lg">
+                                <i class="fas fa-circle fa-stack-2x"></i>
+                                <i class="fab fa-linkedin fa-stack-1x fa-inverse"></i>
+                            </span>
+                        </a>
+                    </li>
+                    
+                    
+                    <li class="list-inline-item">
+                        <a href="https://github.com/kristianeschenburg">
+                            <span class="fa-stack fa-lg">
+                                <i class="fas fa-circle fa-stack-2x"></i>
+                                <i class="fab fa-github fa-stack-1x fa-inverse"></i>
+                            </span>
+                        </a>
+                    </li>
+                    
+                </ul>
+                <p class="copyright text-muted">Copyright &copy; Kristian M. Eschenburg 2019</p>
+            </div>
+        </div>
+    </div>
+</footer>
+
+  
+<script type="text/javascript" async src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-MML-AM_CHTML">
+</script>
+
+
+<script src="/assets/vendor/jquery/jquery.min.js"></script>
+<script src="/assets/vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
+<script src="/assets/vendor/startbootstrap-clean-blog/js/clean-blog.min.js"></script>
+
+<script src="/assets/scripts.js"></script>
+
+
+
+  <!-- Global site tag (gtag.js) - Google Analytics -->
+<script async src="https://www.googletagmanager.com/gtag/js?id="></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', '');
+</script>
+
+
+
+</body>
+
+</html>

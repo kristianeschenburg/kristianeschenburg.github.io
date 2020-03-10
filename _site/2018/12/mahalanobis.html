@@ -1,0 +1,434 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+
+    <title>
+        Mahalanobis Distance: A Distributional Exploration of Brain Connectivity - A Rambling On
+        
+    </title>
+
+    <meta name="description"
+        content="For one of the projects I’m working on, I have an array of multivariate data relating to brain connectivity patterns. Briefly, each brain is represented as a...">
+
+    <link href='https://fonts.googleapis.com/css?family=Lora:400,700,400italic,700italic' rel='stylesheet'
+        type='text/css'>
+    <link
+        href='https://fonts.googleapis.com/css?family=Open+Sans:300italic,400italic,600italic,700italic,800italic,400,300,600,700,800'
+        rel='stylesheet' type='text/css'>
+
+    <link rel="stylesheet" href="/assets/vendor/bootstrap/css/bootstrap.min.css">
+
+    <link rel="stylesheet" href="/assets/vendor/fontawesome-free/css/all.min.css">
+
+    <link rel="stylesheet" href="/assets/main.css">
+    <link rel="canonical" href="http://kristianeschenburg.github.io/2018/12/mahalanobis">
+    <link rel="alternate" type="application/rss+xml" title="A Rambling On"
+        href="/feed.xml">
+
+</head>
+
+<body>
+
+  <!-- Navigation -->
+<nav class="navbar navbar-expand-lg navbar-light fixed-top" id="mainNav">
+    <div class="container">
+        <a class="navbar-brand" href="/">A Rambling On</a>
+        <button class="navbar-toggler navbar-toggler-right" type="button" data-toggle="collapse"
+            data-target="#navbarResponsive" aria-controls="navbarResponsive" aria-expanded="false"
+            aria-label="Toggle navigation">
+            Menu
+            <i class="fa fa-bars"></i>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarResponsive">
+            <ul class="navbar-nav ml-auto">
+
+                <!-- Home -->
+                <li class="nav-item">
+                    <a class="nav-link" href="/">Home</a>
+                </li>
+                
+                <!-- Posts -->
+                <li class="nav-item">
+                    <a class="nav-link" href="/posts">Posts</a>
+                </li>
+
+                <!-- Code -->
+                <li class="nav-item">
+                    <a class="nav-link" href="/code">Code</a>
+                </li>
+
+                <!-- Resume -->
+                <li class="nav-item">
+                    <a class="nav-link" href="/resume">Resume</a>
+                </li>
+
+                <!-- About Me -->
+                <li class="nav-item">
+                    <a class="nav-link" href="/about">About</a>
+                </li>
+            </ul>
+        </div>
+    </div>
+</nav>
+
+  <!-- Page Header -->
+
+  <header class="masthead">
+    
+    <div class="overlay"></div>
+    <div class="container">
+      <div class="row">
+        <div class="col-lg-8 col-md-10 mx-auto">
+          <div class="post-heading">
+            <h1>Mahalanobis Distance: A Distributional Exploration of Brain Connectivity</h1>
+            
+            <span class="meta">Posted by
+              <a href="#">Kristian M. Eschenburg</a>
+              on December 06, 2018 &middot; <span class="reading-time" title="Estimated read time">
+    
+     17 mins  read </span>
+            </span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <div class="container">
+    <div class="row">
+      <div class="col-lg-8 col-md-10 mx-auto">
+
+        <p>For one of the projects I’m working on, I have an array of multivariate data relating to brain connectivity patterns.  Briefly, each brain is represented as a surface mesh, which we represent as a graph <script type="math/tex">G = (V,E)</script>, where <script type="math/tex">V</script> is a set of <script type="math/tex">n</script> vertices, and <script type="math/tex">E</script> are the set of edges between vertices.</p>
+
+<p>Additionally, for each vertex <script type="math/tex">v \in V</script>, we also have an associated scalar <em>label</em>, which we’ll denote <script type="math/tex">l(v)</script>, that identifies what region of the cortex each vertex belongs to, the set of regions which we define as <script type="math/tex">L = \{1, 2, ... k\}</script>.  And finally, for each vertex <script type="math/tex">v \in V</script>, we also have a multivariate feature vector <script type="math/tex">r(v) \in \mathbb{R}^{1 \times k}</script>, that describes the strength of connectivity between it, and every region <script type="math/tex">l \in L</script>.</p>
+
+<figure>
+    <img src="/img/mahalanobis/parcellation.png" class="center-image" width="120%" />
+    <figcaption>Example of cortical map, and array of connectivity features.</figcaption>
+</figure>
+
+<p>I’m interested in examining how “close” the connectivity samples of one region, <script type="math/tex">l_{j}</script>, are to another region, <script type="math/tex">l_{k}</script>.  In the univariate case, one way to compare a scalar sample to a distribution is to use the <script type="math/tex">t</script>-statistic, which measures how many standard deviations away from the mean a given sample is:</p>
+
+<script type="math/tex; mode=display">\begin{align}
+t_{s} = \frac{\bar{x} - \mu}{\frac{s}{\sqrt{n}}}
+\end{align}</script>
+
+<p>where <script type="math/tex">\mu</script> is the population mean, and <script type="math/tex">s</script> is the sample standard deviation.  If we square this, we get:</p>
+
+<script type="math/tex; mode=display">\begin{align}
+t^{2} = \frac{(\bar{x} - \mu)^{2}}{\frac{s^{2}}{n}} =  \frac{n (\bar{x} - \mu)^{2}}{S^{2}} \sim F(1,n)
+\end{align}</script>
+
+<p>We know the last part is true, because the numerator and denominator are independent <script type="math/tex">\chi^{2}</script> distributed random variables.  However, I’m not working with univariate data – I have multivariate data.  The multivariate generalization of the <script type="math/tex">t</script>-statistic is the <a href="https://en.wikipedia.org/wiki/Mahalanobis_distance">Mahalanobis Distance</a>:</p>
+
+<script type="math/tex; mode=display">% <![CDATA[
+\begin{align}
+d &= \sqrt{(\bar{x} - \mu)\Sigma^{-1}(\bar{x}-\mu)^{T}}
+\end{align} %]]></script>
+
+<p>where the squared Mahalanobis Distance is:</p>
+
+<script type="math/tex; mode=display">% <![CDATA[
+\begin{align}
+d^{2} &= (\bar{x} - \mu)\Sigma^{-1}(\bar{x}-\mu)^{T}
+\end{align} %]]></script>
+
+<p>where <script type="math/tex">\Sigma^{-1}</script> is the inverse covariance matrix.  If our <script type="math/tex">X</script>’s were initially distributed with a multivariate normal distribution, <script type="math/tex">N_{p}(\mu,\Sigma)</script> (assuming <script type="math/tex">\Sigma</script> is non-degenerate i.e. positive definite), the squared Mahalanobis distance, <script type="math/tex">d^{2}</script> has a <script type="math/tex">\chi^{2}_{p}</script> distribution.  We show this below.</p>
+
+<p>We know that <script type="math/tex">(X-\mu)</script> is distributed <script type="math/tex">N_{p}(0,\Sigma)</script>.  We also know that, since <script type="math/tex">\Sigma</script> is symmetric and real, that we can compute the eigendecomposition of <script type="math/tex">\Sigma</script> as:</p>
+
+<script type="math/tex; mode=display">\begin{align}
+\Sigma = U \Lambda U^{T} \\
+\end{align}</script>
+
+<p>and consequentially, because <script type="math/tex">U</script> is an orthogonal matrix, and because <script type="math/tex">\Lambda</script> is diagonal, we know that <script type="math/tex">\Sigma^{-1}</script> is:</p>
+
+<script type="math/tex; mode=display">% <![CDATA[
+\begin{align}
+\Sigma^{-1} &= (U \Lambda U^{T})^{-1} \\
+&= U \Lambda^{-1} U^{T} \\
+&= (U \Lambda^{\frac{-1}{2}}) (U \Lambda^{\frac{-1}{2}})^{T} \\
+&= R R^{T}
+\end{align} %]]></script>
+
+<p>Therefore, we know that <script type="math/tex">R^{T}(X-\mu) \sim N_{p}(0,I_{p})</script>:</p>
+
+<script type="math/tex; mode=display">% <![CDATA[
+\begin{align}
+
+X &\sim N_{p}(\mu,\Sigma) \\
+(X-\mu) = Y &\sim N_{p}(0,\Sigma)\\
+R^{T}Y = Z &\sim N_{p}(0, R^{T} \Sigma R) \\
+&\sim N_{p}(0, \Lambda^{\frac{-1}{2}} U^{T} (U \Lambda U^{T}) U \Lambda^{\frac{-1}{2}}) \\
+&\sim N_{p}(0, \Lambda^{\frac{-1}{2}} I_{p} \Lambda I_{p} \Lambda^{\frac{-1}{2}}) \\
+&\sim N_{p}(0,I_{p})
+\end{align} %]]></script>
+
+<p>so that we have</p>
+
+<script type="math/tex; mode=display">% <![CDATA[
+\begin{align}
+&= (X-\mu)\Sigma^{-1}(X-\mu)^{T} \\
+&= (X-\mu)RR^{T}(X-\mu)^{T} \\
+&= Z^{T}Z
+\end{align} %]]></script>
+
+<p>the sum of <script type="math/tex">p</script> standard Normal random variables, which is the definition of a <script type="math/tex">\chi_{p}^{2}</script> distribution with <script type="math/tex">p</script> degrees of freedom.  So, given that we start with a <script type="math/tex">MVN</script> random variable, the squared Mahalanobis distance is <script type="math/tex">\chi^{2}_{p}</script> distributed.  Because the sample mean and sample covariance are consistent estimators of the population mean and population covariance parameters, we can use these estimates in our computation of the Mahalanobis distance.</p>
+
+<p>Also, of particular importance is the fact that the Mahalanobis distance is <strong>not symmetric</strong>.  That is to say, if we define the Mahalanobis distance as:</p>
+
+<script type="math/tex; mode=display">\begin{align}
+M(A, B) = \sqrt{(A - \mu(B))\Sigma(B)^{-1}(A-\mu(B))^{T}}
+\end{align}</script>
+
+<p>then <script type="math/tex">M(A,B) \neq M(B,A)</script>, clearly.  Because the parameter estimates are not guaranteed to be the same, it’s straightforward to see why this is the case.</p>
+
+<p>Now, back to the task at hand.  For a specified target region, <script type="math/tex">l_{T}</script>, with a set of vertices, <script type="math/tex">V_{T} = \{v \; : \; l(v) \; = \; l_{T}, \; \forall \; v \in V\}</script>, each with their own distinct connectivity fingerprints, I want to explore which areas of the cortex have connectivity fingerprints that are different from or similar to <script type="math/tex">l_{T}</script>’s features, in distribution.  I can do this by using the Mahalanobis Distance.  And based on the analysis I showed above, we know that the data-generating process of these distances is related to the <script type="math/tex">\chi_{p}^{2}</script> distribution.</p>
+
+<p>First, I’ll estimate the covariance matrix, <script type="math/tex">\Sigma_{T}</script>, of our target region, <script type="math/tex">l_{T}</script>, using the <a href="http://perso.ens-lyon.fr/patrick.flandrin/LedoitWolf_JMA2004.pdf">Ledoit-Wolf estimator</a> (the shrunken covariance estimate has been shown to be a more reliable estimate of the population covariance), and mean connectivity fingerprint, <script type="math/tex">\mu_{T}</script>.  Then, I’ll compute <script type="math/tex">d^{2} = M^{2}(A,A)</script> for every <script type="math/tex">\\{v: v \in V_{T}\\}</script>.  The empirical distribution of these distances should follow a <script type="math/tex">\chi_{p}^{2}</script> distribution.  If we wanted to do hypothesis testing, we would use this distribution as our null distribution.</p>
+
+<p>Next, in order to assess whether this intra-regional similarity is actually informative, I’ll also compute the similarity of <script type="math/tex">l_{T}</script> to every other region, <script type="math/tex">\\{ l_{k} \; : \; \forall \; k \in L \setminus \\{T\\} \\}</script> – that is, I’ll compute <script type="math/tex">M^{2}(A, B) \; \forall \; B \in L \setminus T</script>.  If the connectivity samples of our region of interest are as similar to one another as they are to other regions, then <script type="math/tex">d^{2}</script> doesn’t really offer us any discriminating information – I don’t expect this to be the case, but we need to verify this.</p>
+
+<p>Then, as a confirmation step to ensure that our empirical data actually follows the theoretical <script type="math/tex">\chi_{p}^{2}</script> distribution, I’ll compute the location and scale <a href="https://en.wikipedia.org/wiki/Maximum_likelihood_estimation">Maximumim Likelihood</a>(MLE) parameter estimates of our <script type="math/tex">d^{2}</script> distribution, keeping the <em>d.o.f.</em> (e.g. <script type="math/tex">p</script>) fixed.</p>
+
+<p>See below for Python code and figures…</p>
+
+<h3 id="step-1-compute-parameter-estimates">Step 1: Compute Parameter Estimates</h3>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="o">%</span><span class="n">matplotlib</span> <span class="n">inline</span>
+<span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="k">as</span> <span class="n">plt</span>
+
+<span class="kn">from</span> <span class="nn">matplotlib</span> <span class="kn">import</span> <span class="n">rc</span>
+<span class="n">rc</span><span class="p">(</span><span class="s">'text'</span><span class="p">,</span> <span class="n">usetex</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="n">np</span>
+<span class="kn">from</span> <span class="nn">scipy.spatial.distance</span> <span class="kn">import</span> <span class="n">cdist</span>
+<span class="kn">from</span> <span class="nn">scipy.stats</span> <span class="kn">import</span> <span class="n">chi2</span><span class="p">,</span> <span class="n">probplot</span>
+
+<span class="kn">from</span> <span class="nn">sklearn</span> <span class="kn">import</span> <span class="n">covariance</span>
+</code></pre></div></div>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1"># lab_map is a dictionary, mapping label values to sample indices
+# our region of interest has a label of 8
+</span><span class="n">LT</span> <span class="o">=</span> <span class="mi">8</span>
+
+<span class="c1"># get indices for region LT, and rest of brain
+</span><span class="n">lt_indices</span> <span class="o">=</span> <span class="n">lab_map</span><span class="p">[</span><span class="n">LT</span><span class="p">]</span>
+<span class="n">rb_indices</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">([</span><span class="n">lab_map</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">lab_map</span><span class="o">.</span><span class="n">keys</span><span class="p">()</span> <span class="k">if</span> <span class="n">k</span> <span class="o">!=</span> <span class="n">LT</span><span class="p">])</span>
+
+<span class="n">data_lt</span> <span class="o">=</span> <span class="n">conn</span><span class="p">[</span><span class="n">lt_indices</span><span class="p">,</span> <span class="p">:]</span>
+<span class="n">data_rb</span> <span class="o">=</span> <span class="n">conn</span><span class="p">[</span><span class="n">rb_indices</span><span class="p">,</span> <span class="p">:]</span>
+
+<span class="c1"># fit covariance and precision matrices
+# Shrinkage factor = 0.2
+</span><span class="n">cov_lt</span> <span class="o">=</span> <span class="n">covariance</span><span class="o">.</span><span class="n">ShrunkCovariance</span><span class="p">(</span><span class="n">assume_centered</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span> <span class="n">shrinkage</span><span class="o">=</span><span class="mf">0.2</span><span class="p">)</span>
+<span class="n">cov_lt</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">data_lt</span><span class="p">)</span>
+<span class="n">P</span> <span class="o">=</span> <span class="n">cov_lt</span><span class="o">.</span><span class="n">precision_</span>
+</code></pre></div></div>
+
+<p>Next, compute the Mahalanobis Distances:</p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1"># LT to LT Mahalanobis Distance
+</span><span class="n">dist_lt</span> <span class="o">=</span> <span class="n">cdist</span><span class="p">(</span><span class="n">data_lt</span><span class="p">,</span> <span class="n">data_lt</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="mi">0</span><span class="p">)[</span><span class="bp">None</span><span class="p">,:],</span> <span class="n">metric</span><span class="o">=</span><span class="s">'mahalanobis'</span><span class="p">,</span> <span class="n">VI</span><span class="o">=</span><span class="n">P</span><span class="p">)</span>
+<span class="n">dist_lt2</span> <span class="o">=</span> <span class="n">dist_lt</span><span class="o">**</span><span class="mi">2</span>
+
+<span class="c1"># fit covariance estimate for every region in cortical map
+</span><span class="n">EVs</span> <span class="o">=</span> <span class="p">{</span><span class="n">l</span><span class="p">:</span> <span class="n">covariance</span><span class="o">.</span><span class="n">ShrunkCovariance</span><span class="p">(</span><span class="n">assume_centered</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span> 
+        <span class="n">shrinkage</span><span class="o">=</span><span class="mf">0.2</span><span class="p">)</span> <span class="k">for</span> <span class="n">l</span> <span class="ow">in</span> <span class="n">labels</span><span class="p">}</span>
+
+<span class="k">for</span> <span class="n">l</span> <span class="ow">in</span> <span class="n">lab_map</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+    <span class="n">EVs</span><span class="p">[</span><span class="n">l</span><span class="p">]</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">conn</span><span class="p">[</span><span class="n">lab_map</span><span class="p">[</span><span class="n">l</span><span class="p">],:])</span>
+
+<span class="c1"># compute d^2 from LT to every cortical region
+# save distances in dictionary
+</span><span class="n">lt_to_brain</span> <span class="o">=</span> <span class="p">{}</span><span class="o">.</span><span class="n">fromkeys</span><span class="p">(</span><span class="n">labels</span><span class="p">)</span>
+<span class="k">for</span> <span class="n">l</span> <span class="ow">in</span> <span class="n">lab_map</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+
+    <span class="n">temp_data</span> <span class="o">=</span> <span class="n">conn</span><span class="p">[</span><span class="n">label_map</span><span class="p">[</span><span class="n">l</span><span class="p">],</span> <span class="p">:]</span>
+    <span class="n">temp_mu</span> <span class="o">=</span> <span class="n">temp_data</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="mi">0</span><span class="p">)[</span><span class="bp">None</span><span class="p">,</span> <span class="p">:]</span>
+
+    <span class="n">temp_mh</span> <span class="o">=</span> <span class="n">cdist</span><span class="p">(</span><span class="n">data_lt</span><span class="p">,</span> <span class="n">temp_mu</span><span class="p">,</span> <span class="n">metric</span><span class="o">=</span><span class="s">'mahalanobis'</span><span class="p">,</span> <span class="n">VI</span><span class="o">=</span><span class="n">EVs</span><span class="p">[</span><span class="n">l</span><span class="p">]</span><span class="o">.</span><span class="n">precision_</span><span class="p">)</span>
+    <span class="n">temp_mh2</span> <span class="o">=</span> <span class="n">temp_mh</span><span class="o">**</span><span class="mi">2</span>
+
+    <span class="n">lt_to_brain</span><span class="p">[</span><span class="n">l</span><span class="p">]</span> <span class="o">=</span> <span class="n">temp_mh2</span>
+
+<span class="c1"># plot distributions seperate (scales differ)
+</span><span class="n">fig</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span> <span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">12</span><span class="p">,</span><span class="mi">12</span><span class="p">))</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">subplot</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">hist</span><span class="p">(</span><span class="n">lt_to_brain</span><span class="p">[</span><span class="n">LT</span><span class="p">],</span> <span class="mi">50</span><span class="p">,</span> <span class="n">density</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s">'blue'</span><span class="p">,</span> 
+    <span class="n">label</span><span class="o">=</span><span class="s">'Region-to-Self'</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.7</span><span class="p">)</span>
+
+<span class="n">plt</span><span class="o">.</span><span class="n">subplot</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span><span class="mi">2</span><span class="p">)</span>
+<span class="k">for</span> <span class="n">l</span> <span class="ow">in</span> <span class="n">labels</span><span class="p">:</span>
+    <span class="k">if</span> <span class="n">l</span> <span class="o">!=</span> <span class="n">LT</span><span class="p">:</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">hist</span><span class="p">(</span><span class="n">lt_to_brain</span><span class="p">[</span><span class="n">l</span><span class="p">],</span> <span class="mi">50</span><span class="p">,</span> <span class="n">density</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="n">linewidth</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> 
+            <span class="n">alpha</span><span class="o">=</span><span class="mf">0.4</span><span class="p">,</span> <span class="n">histtype</span><span class="o">=</span><span class="s">'step'</span><span class="p">)</span>
+</code></pre></div></div>
+
+<figure>
+    <img src="/img/mahalanobis/IntraInterMahal.jpg" class="center-image" />
+    <figcaption>Empirical distributions of within-region (top) and between-region (bottom) $$d^{2}$$ values.  Each line is the distribution of the distance of samples in our ROI to a whole region.</figcaption>
+</figure>
+
+<p>As expected, the distribution of <script type="math/tex">d^{2}</script> the distance of samples in our region of interest, <script type="math/tex">l_{T}</script>, to distributions computed from other regions are (considerably) larger and much more variable, while the profile of points within <script type="math/tex">l_{T}</script> looks to have much smaller variance – this is good!  This means that we have high intra-regional similarity when compared to inter-regional similarities.  This fits what’s known in neuroscience as the <a href="https://www.ncbi.nlm.nih.gov/pubmed/9651489">“cortical field hypothesis”</a>.</p>
+
+<h3 id="step-2-distributional-qc-check">Step 2: Distributional QC-Check</h3>
+
+<p>Because we know that our data should follow a <script type="math/tex">\chi^{2}_{p}</script> distribution, we can fit the MLE estimate of our location and scale parameters, while keeping  the <script type="math/tex">df</script> parameter fixed.</p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">p</span> <span class="o">=</span> <span class="n">data_lt</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+<span class="n">mle_chi2_theory</span> <span class="o">=</span> <span class="n">chi2</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">dist_lt2</span><span class="p">,</span> <span class="n">fdf</span><span class="o">=</span><span class="n">p</span><span class="p">)</span>
+
+<span class="n">xr</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="n">data_lt</span><span class="o">.</span><span class="nb">min</span><span class="p">(),</span> <span class="n">data_lt</span><span class="o">.</span><span class="nb">max</span><span class="p">(),</span> <span class="mi">1000</span><span class="p">)</span>
+<span class="n">pdf_chi2_theory</span><span class="p">(</span><span class="n">xr</span><span class="p">,</span> <span class="o">*</span><span class="n">mle_chi2_theory</span><span class="p">)</span>
+
+<span class="n">fig</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplot</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="mi">2</span><span class="p">,</span><span class="mi">2</span><span class="p">,</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">18</span><span class="p">,</span> <span class="mi">6</span><span class="p">))</span>
+
+<span class="c1"># plot theoretical vs empirical null distributon
+</span><span class="n">plt</span><span class="o">.</span><span class="n">subplot</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="mi">2</span><span class="p">,</span><span class="mi">1</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">hist</span><span class="p">(</span><span class="n">data_lt</span><span class="p">,</span> <span class="n">density</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s">'blue'</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.6</span><span class="p">,</span>
+    <span class="n">label</span> <span class="o">=</span> <span class="s">'Empirical'</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">xr</span><span class="p">,</span> <span class="n">pdf_chi2_theory</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s">'red'</span><span class="p">,</span>
+    <span class="n">label</span> <span class="o">=</span> <span class="s">'$</span><span class="err">\</span><span class="s">chi^{2}_{p}'</span><span class="p">)</span>
+
+<span class="c1"># plot QQ plot of empirical distribution
+</span><span class="n">plt</span><span class="o">.</span><span class="n">subplot</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="mi">2</span><span class="p">,</span><span class="mi">2</span><span class="p">)</span>
+<span class="n">probplot</span><span class="p">(</span><span class="n">D2</span><span class="o">.</span><span class="n">squeeze</span><span class="p">(),</span> <span class="n">sparams</span><span class="o">=</span><span class="n">mle_chi2_theory</span><span class="p">,</span> <span class="n">dist</span><span class="o">=</span><span class="n">chi2</span><span class="p">,</span> <span class="n">plot</span><span class="o">=</span><span class="n">plt</span><span class="p">);</span>
+</code></pre></div></div>
+
+<figure>
+    <img src="/img/mahalanobis/Density.QQPlot.png" class="center-image" width="100%" />
+    <figcaption>Density and QQ plot of null distribution.</figcaption>
+</figure>
+
+<p>From looking at the QQ plot, we see that the empirical density fits the theoretical density pretty well, but there is some evidence that the empirical density has heavier tails.  The heavier tail of the upper quantile could probability be explained by acknowledging that our starting cortical map is not perfect (in fact there is no “gold-standard” cortical map).  Cortical regions do not have discrete cutoffs, although there are reasonably steep <a href="https://www.ncbi.nlm.nih.gov/pubmed/25316338">gradients in connectivity</a>.  If we were to include samples that were considerably far away from the the rest of the samples, this would result in inflated densities of higher <script type="math/tex">d^{2}</script> values.</p>
+
+<p>Likewise, we also made the distributional assumption that our connectivity vectors were multivariate normal – this might not be true – in which case our assumption that <script type="math/tex">d^{2}</script> follows a <script type="math/tex">\chi^{2}_{p}</script> would also not hold.</p>
+
+<p>Finally, let’s have a look at some brains!  Below, is the region we used as our target – the connectivity profiles from vertices in this region were used to compute our mean vector and covariance matrix – we compared the rest of the brain to this region.</p>
+
+<figure>
+    <img src="/img/mahalanobis/Region_LT.png" class="center-image" width="100%" />
+    <figcaption>Region of interest.</figcaption>
+</figure>
+
+<figure>
+    <img src="/img/mahalanobis/MahalanobisDistance.png" class="center-image" width="100%" />
+    <figcaption>Estimated squared Mahalanobis distances, overlaid on cortical surface.</figcaption>
+</figure>
+
+<p>Here, larger <script type="math/tex">d^{2}</script> values are in red, and smaller <script type="math/tex">d^{2}</script> are in black.  Interestingly, we do see pretty large variance of <script type="math/tex">d^{2}</script> spread across the cortex – however the values are smoothly varying, but there do exists sharp boundaries.  We kind of expected this – some regions, though geodesically far away, should have similar connectivity profiles if they’re connected to the same regions of the cortex.  However, the regions with connectivity profiles most different than our target region are not only contiguous (they’re not noisy), but follow known anatomical boundaries, as shown by the overlaid boundary map.</p>
+
+<p>This is interesting stuff – I’d originally intended on just learning more about the Mahalanobis Distance as a measure, and exploring its distributional properties – but now that I see these results, I think it’s definitely worth exploring further!</p>
+
+
+        <hr>
+
+        <div class="clearfix">
+
+          
+          <a class="btn btn-primary float-left" href="/2018/11/convergence" data-toggle="tooltip" data-placement="top" title="Convergence In Probability Using Python">&larr; Previous<span class="d-none d-md-inline">
+              Post</span></a>
+          
+          
+          <a class="btn btn-primary float-right" href="/2019/03/delta-method" data-toggle="tooltip" data-placement="top" title="The Delta Method">Next<span class="d-none d-md-inline">
+              Post</span> &rarr;</a>
+          
+
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+
+  <!-- Footer -->
+
+<hr>
+
+<footer>
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-8 col-md-10 mx-auto">
+                <ul class="list-inline text-center">
+                    
+                    <li class="list-inline-item">
+                        <a href="mailto:keschenb@uw.edu">
+                            <span class="fa-stack fa-lg">
+                                <i class="fas fa-circle fa-stack-2x"></i>
+                                <i class="far fa-envelope fa-stack-1x fa-inverse"></i>
+                            </span>
+                        </a>
+                    </li>
+                    
+                    
+                    <li class="list-inline-item">
+                        <a href="https://twitter.com/keschh">
+                            <span class="fa-stack fa-lg">
+                                <i class="fas fa-circle fa-stack-2x"></i>
+                                <i class="fab fa-twitter fa-stack-1x fa-inverse"></i>
+                            </span>
+                        </a>
+                    </li>
+                    
+                    
+                    
+                    <li class="list-inline-item">
+                        <a href="https://www.linkedin.com/in/kristianeschenburg">
+                            <span class="fa-stack fa-lg">
+                                <i class="fas fa-circle fa-stack-2x"></i>
+                                <i class="fab fa-linkedin fa-stack-1x fa-inverse"></i>
+                            </span>
+                        </a>
+                    </li>
+                    
+                    
+                    <li class="list-inline-item">
+                        <a href="https://github.com/kristianeschenburg">
+                            <span class="fa-stack fa-lg">
+                                <i class="fas fa-circle fa-stack-2x"></i>
+                                <i class="fab fa-github fa-stack-1x fa-inverse"></i>
+                            </span>
+                        </a>
+                    </li>
+                    
+                </ul>
+                <p class="copyright text-muted">Copyright &copy; Kristian M. Eschenburg 2019</p>
+            </div>
+        </div>
+    </div>
+</footer>
+
+  
+<script type="text/javascript" async src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-MML-AM_CHTML">
+</script>
+
+
+<script src="/assets/vendor/jquery/jquery.min.js"></script>
+<script src="/assets/vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
+<script src="/assets/vendor/startbootstrap-clean-blog/js/clean-blog.min.js"></script>
+
+<script src="/assets/scripts.js"></script>
+
+
+
+  <!-- Global site tag (gtag.js) - Google Analytics -->
+<script async src="https://www.googletagmanager.com/gtag/js?id="></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', '');
+</script>
+
+
+
+</body>
+
+</html>

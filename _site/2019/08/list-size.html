@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+
+    <title>
+        Quick Note: Initialize Python List With Prespecified Size - A Rambling On
+        
+    </title>
+
+    <meta name="description"
+        content="I wanted to make a quick note about something I found incredibly helpful the other day.">
+
+    <link href='https://fonts.googleapis.com/css?family=Lora:400,700,400italic,700italic' rel='stylesheet'
+        type='text/css'>
+    <link
+        href='https://fonts.googleapis.com/css?family=Open+Sans:300italic,400italic,600italic,700italic,800italic,400,300,600,700,800'
+        rel='stylesheet' type='text/css'>
+
+    <link rel="stylesheet" href="/assets/vendor/bootstrap/css/bootstrap.min.css">
+
+    <link rel="stylesheet" href="/assets/vendor/fontawesome-free/css/all.min.css">
+
+    <link rel="stylesheet" href="/assets/main.css">
+    <link rel="canonical" href="http://kristianeschenburg.github.io/2019/08/list-size">
+    <link rel="alternate" type="application/rss+xml" title="A Rambling On"
+        href="/feed.xml">
+
+</head>
+
+<body>
+
+  <!-- Navigation -->
+<nav class="navbar navbar-expand-lg navbar-light fixed-top" id="mainNav">
+    <div class="container">
+        <a class="navbar-brand" href="/">A Rambling On</a>
+        <button class="navbar-toggler navbar-toggler-right" type="button" data-toggle="collapse"
+            data-target="#navbarResponsive" aria-controls="navbarResponsive" aria-expanded="false"
+            aria-label="Toggle navigation">
+            Menu
+            <i class="fa fa-bars"></i>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarResponsive">
+            <ul class="navbar-nav ml-auto">
+
+                <!-- Home -->
+                <li class="nav-item">
+                    <a class="nav-link" href="/">Home</a>
+                </li>
+                
+                <!-- Posts -->
+                <li class="nav-item">
+                    <a class="nav-link" href="/posts">Posts</a>
+                </li>
+
+                <!-- Code -->
+                <li class="nav-item">
+                    <a class="nav-link" href="/code">Code</a>
+                </li>
+
+                <!-- Resume -->
+                <li class="nav-item">
+                    <a class="nav-link" href="/resume">Resume</a>
+                </li>
+
+                <!-- About Me -->
+                <li class="nav-item">
+                    <a class="nav-link" href="/about">About</a>
+                </li>
+            </ul>
+        </div>
+    </div>
+</nav>
+
+  <!-- Page Header -->
+
+  <header class="masthead">
+    
+    <div class="overlay"></div>
+    <div class="container">
+      <div class="row">
+        <div class="col-lg-8 col-md-10 mx-auto">
+          <div class="post-heading">
+            <h1>Quick Note: Initialize Python List With Prespecified Size</h1>
+            
+            <span class="meta">Posted by
+              <a href="#">Kristian M. Eschenburg</a>
+              on August 20, 2019 &middot; <span class="reading-time" title="Estimated read time">
+    
+     3 mins  read </span>
+            </span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <div class="container">
+    <div class="row">
+      <div class="col-lg-8 col-md-10 mx-auto">
+
+        <p>I wanted to make a quick note about something I found incredibly helpful the other day.</p>
+
+<p>Lists (or ArrayLists, as new Computer Science students are often taught in their CS 101 courses), are a data strucures that are fundamentally based on arrays, but with additional methods associated with them.  Lists are generally filled with an <code class="highlighter-rouge">append</code> method, that fills indices in this array.  Lists are often useful in the case where the number of intial spots that will be filled is unknown.</p>
+
+<p>The base arrays are generally associated with a <code class="highlighter-rouge">size</code> or <code class="highlighter-rouge">length</code> parameter, that initializes the array to a certain length.  Under the hood (and generally hidden from the user), however, the <code class="highlighter-rouge">List</code> class also has a <code class="highlighter-rouge">resize</code> method that adds available space to the array when a certain percentage of available indices are occupied, technically allowing the size of the list to grow, and grow, and grow…</p>
+
+<p>Perptually applying <code class="highlighter-rouge">resize</code>, however, is slow, especially in the case where you’re appending a lot of items.  All of the data currently in the <code class="highlighter-rouge">List</code> object will need to be moved into the new, resized array.</p>
+
+<p>I needed to aggregate a large number (couple thousand) of Pandas DataFrame objects, each saved as a single file, into a single DataFrame.  My first thought was to simply incrementally load and append all incoming DataFrames to a list, and then use <code class="highlighter-rouge">pandas.concat</code> to aggregate them all together.  Appending all of these DataFrames together became incredibly time consuming (at this point, I remembered the <code class="highlighter-rouge">resize</code> issue).</p>
+
+<p>A quick Google search led me to the following solution, allowing me to predefine how large I wanted my list to be:</p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1"># For simplicity assume we have 10 items
+</span><span class="n">known_size</span> <span class="o">=</span> <span class="mi">10</span>
+<span class="n">initialized_list</span> <span class="o">=</span> <span class="p">[</span><span class="bp">None</span><span class="p">]</span><span class="o">*</span><span class="n">known_size</span>
+
+<span class="k">print</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">initialized_list</span><span class="p">))</span>
+<span class="mi">10</span>
+</code></pre></div></div>
+
+<p>Neat, huh?  And ridiculously simple.  Now, rather than append, we can do the following:</p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">for</span> <span class="n">j</span><span class="p">,</span> <span class="n">temp_file</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">list_of_files</span><span class="p">):</span>
+    <span class="n">loaded_file</span> <span class="o">=</span> <span class="n">load_file</span><span class="p">(</span><span class="n">temp_file</span><span class="p">)</span>
+    <span class="n">initialized_list</span><span class="p">[</span><span class="n">j</span><span class="p">]</span> <span class="o">=</span> <span class="n">loaded_file</span>
+</code></pre></div></div>
+
+<p>Because the <strong>memory has already been pre-allocated</strong>, the <code class="highlighter-rouge">resize</code> method is never accessed, and we save time.  I also found <a href="http://zwmiller.com/blogs/python_data_structure_speed.html">this blog post</a> with some information about timing with regards to Numpy arrays, lists, and tuples – the author shows that indexing into a Numpy array is actually slower than indexing into a list.  Numpy arrays are primarilly useful in the case where operations can be vectorized – then they’re the clear winners in terms of speed.</p>
+
+
+        <hr>
+
+        <div class="clearfix">
+
+          
+          <a class="btn btn-primary float-left" href="/2019/03/delta-method" data-toggle="tooltip" data-placement="top" title="The Delta Method">&larr; Previous<span class="d-none d-md-inline">
+              Post</span></a>
+          
+          
+          <a class="btn btn-primary float-right" href="/2019/08/dose-response" data-toggle="tooltip" data-placement="top" title="Dose-Response Curves and Biomarker Diagnostic Power">Next<span class="d-none d-md-inline">
+              Post</span> &rarr;</a>
+          
+
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+
+  <!-- Footer -->
+
+<hr>
+
+<footer>
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-8 col-md-10 mx-auto">
+                <ul class="list-inline text-center">
+                    
+                    <li class="list-inline-item">
+                        <a href="mailto:keschenb@uw.edu">
+                            <span class="fa-stack fa-lg">
+                                <i class="fas fa-circle fa-stack-2x"></i>
+                                <i class="far fa-envelope fa-stack-1x fa-inverse"></i>
+                            </span>
+                        </a>
+                    </li>
+                    
+                    
+                    <li class="list-inline-item">
+                        <a href="https://twitter.com/keschh">
+                            <span class="fa-stack fa-lg">
+                                <i class="fas fa-circle fa-stack-2x"></i>
+                                <i class="fab fa-twitter fa-stack-1x fa-inverse"></i>
+                            </span>
+                        </a>
+                    </li>
+                    
+                    
+                    
+                    <li class="list-inline-item">
+                        <a href="https://www.linkedin.com/in/kristianeschenburg">
+                            <span class="fa-stack fa-lg">
+                                <i class="fas fa-circle fa-stack-2x"></i>
+                                <i class="fab fa-linkedin fa-stack-1x fa-inverse"></i>
+                            </span>
+                        </a>
+                    </li>
+                    
+                    
+                    <li class="list-inline-item">
+                        <a href="https://github.com/kristianeschenburg">
+                            <span class="fa-stack fa-lg">
+                                <i class="fas fa-circle fa-stack-2x"></i>
+                                <i class="fab fa-github fa-stack-1x fa-inverse"></i>
+                            </span>
+                        </a>
+                    </li>
+                    
+                </ul>
+                <p class="copyright text-muted">Copyright &copy; Kristian M. Eschenburg 2019</p>
+            </div>
+        </div>
+    </div>
+</footer>
+
+  
+<script type="text/javascript" async src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-MML-AM_CHTML">
+</script>
+
+
+<script src="/assets/vendor/jquery/jquery.min.js"></script>
+<script src="/assets/vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
+<script src="/assets/vendor/startbootstrap-clean-blog/js/clean-blog.min.js"></script>
+
+<script src="/assets/scripts.js"></script>
+
+
+
+  <!-- Global site tag (gtag.js) - Google Analytics -->
+<script async src="https://www.googletagmanager.com/gtag/js?id="></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', '');
+</script>
+
+
+
+</body>
+
+</html>
