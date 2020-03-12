@@ -35,7 +35,11 @@ port: 4444
 plugins:
   - jekyll-feed
   - jekyll-scholar
-  - jekyll-paginate
+  - jekyll-paginate-v2
+  - jekyll-sitemap
+  - jekyll-seo-tag
+  - jekyll-compose
+  - jekyll-redirect-from
 
 # Jekyll-Scholar build settings
 scholar:
