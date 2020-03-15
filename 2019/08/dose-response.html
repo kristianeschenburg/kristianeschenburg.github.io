@@ -1,0 +1,554 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+
+    <title>
+        Dose-Response Curves and Biomarker Diagnostic Power - A Rambling On
+        
+    </title>
+
+    <meta name="description"
+        content="The other day, one of my friends and colleagues (I’ll refer to him as “Dr. A”) asked me if I knew anything about assessing biomarker diagnostic power. He wen...">
+
+    <link href='https://fonts.googleapis.com/css?family=Lora:400,700,400italic,700italic' rel='stylesheet'
+        type='text/css'>
+    <link
+        href='https://fonts.googleapis.com/css?family=Open+Sans:300italic,400italic,600italic,700italic,800italic,400,300,600,700,800'
+        rel='stylesheet' type='text/css'>
+
+    <link rel="stylesheet" href="/assets/vendor/bootstrap/css/bootstrap.min.css">
+
+    <link rel="stylesheet" href="/assets/vendor/fontawesome-free/css/all.min.css">
+
+    <link rel="stylesheet" href="/assets/main.css">
+    <link rel="canonical" href="http://kristianeschenburg.github.io/2019/08/dose-response">
+    <link rel="alternate" type="application/rss+xml" title="A Rambling On"
+        href="/feed.xml">
+
+</head>
+
+<body>
+
+  <!-- Navigation -->
+<nav class="navbar navbar-expand-lg navbar-light fixed-top" id="mainNav">
+    <div class="container">
+        <a class="navbar-brand" href="/">A Rambling On</a>
+        <button class="navbar-toggler navbar-toggler-right" type="button" data-toggle="collapse"
+            data-target="#navbarResponsive" aria-controls="navbarResponsive" aria-expanded="false"
+            aria-label="Toggle navigation">
+            Menu
+            <i class="fa fa-bars"></i>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarResponsive">
+            <ul class="navbar-nav ml-auto">
+
+                <!-- Home -->
+                <li class="nav-item">
+                    <a class="nav-link" href="/">Home</a>
+                </li>
+                
+                <!-- Posts -->
+                <li class="nav-item">
+                    <a class="nav-link" href="/posts">Posts</a>
+                </li>
+
+                <!-- Code -->
+                <li class="nav-item">
+                    <a class="nav-link" href="/code">Code</a>
+                </li>
+
+                <!-- Resume -->
+                <li class="nav-item">
+                    <a class="nav-link" href="/resume">Resume</a>
+                </li>
+
+                <!-- About Me -->
+                <li class="nav-item">
+                    <a class="nav-link" href="/about">About</a>
+                </li>
+            </ul>
+        </div>
+    </div>
+</nav>
+
+  <!-- Page Header -->
+
+  <header class="masthead">
+    
+    <div class="overlay"></div>
+    <div class="container">
+      <div class="row">
+        <div class="col-lg-8 col-md-10 mx-auto">
+          <div class="post-heading">
+            <h1>Dose-Response Curves and Biomarker Diagnostic Power</h1>
+            
+            <span class="meta">Posted by
+              <a href="#">Kristian M. Eschenburg</a>
+              on August 27, 2019 &middot; <span class="reading-time" title="Estimated read time">
+    
+     25 mins  read </span>
+            </span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <div class="container">
+    <div class="row">
+      <div class="col-lg-8 col-md-10 mx-auto">
+
+        <p>The other day, one of my friends and colleagues (I’ll refer to him as “Dr. A”) asked me if I knew anything about assessing biomarker diagnostic power.  He went on to describe his clinical problem, which I’ll try to recant here (but will likely mess up some of the relevant detail – his research pertains to generating induced pluripotent cardiac stem cells, which I have little to no experience with):</p>
+
+<ul>
+  <li><strong>Dr. A</strong>:
+    <ul>
+      <li>
+        <p>“So chemotherapy is meant to combat cancer.  But some clinicians, and their patients, have found that some forms of chemotherapy and anti-cancer drugs later result in problems with the heart and vasculature – these problems are collectively referred to as ‘cardiotoxicity’.</p>
+      </li>
+      <li>
+        <p>We’re interested in developing biomarkers that will help us identify which patients might be susceptible to cardiotoxicity, and in assessing the predictive power of these biomarkers.  Can you help me?”</p>
+      </li>
+    </ul>
+  </li>
+</ul>
+
+<p>What follows will be my exploration into what Dr. A called <a href="https://en.wikipedia.org/wiki/Dose%E2%80%93response_relationship">dose-response curves</a>, and my approach on how to use these curves to assess biomarker diagnostic power.  I’ll do a walk through of some Python code that I’ve written up, where I’ll examine dose-response curves and their diagnostic power using the <strong>receiver operating characteristic</strong> (<a href="https://en.wikipedia.org/wiki/Receiver_operating_characteristic">ROC</a>) and the closely related <strong>area under the curve</strong> (<a href="https://en.wikipedia.org/wiki/Receiver_operating_characteristic#Area_under_the_curve">AUC</a>) metrics.</p>
+
+<p>If you want to see the actual dose-response curve analysis, skip to the <strong>Analyzing Synthetic Dose-Response Curves</strong> section down below.</p>
+
+<h3 id="brief-introduction-to-the-roc-and-auc">Brief Introduction to the ROC and AUC</h3>
+<p>I first wanted to describe to Dr. A how to use the ROC for biomarkers, so I made a brief Python tutorial for him to look at.  Below begins a more in-depth description of what I sent him.</p>
+
+<p>We start by importing some necessary libraries:</p>
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="o">%</span><span class="n">matplotlib</span> <span class="n">inline</span>
+<span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="k">as</span> <span class="n">plt</span>
+<span class="kn">from</span> <span class="nn">matplotlib.lines</span> <span class="kn">import</span> <span class="n">Line2D</span>
+
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="n">np</span>
+<span class="kn">from</span> <span class="nn">sklearn.metrics</span> <span class="kn">import</span> <span class="n">auc</span>
+</code></pre></div></div>
+
+<p>Next, we define a function to compute the ROC curve.  While <a href="https://scikit-learn.org/stable/modules/generated/sklearn.metrics.roc_curve.html">scikit-learn</a> has a function to compute the ROC, computing it yourself makes it easier to understand what the ROC curve actually represents.</p>
+
+<p>The ROC curve is essentially a curve that plots the true positive and false positive classification rates against one another, for various user-defined thresholds of the data.  We pick a biomarker level threshold – let’s say <script type="math/tex">T</script> – assign each sample a value of 0 or 1 depending on whether its measured biomarker level is greater than or less than <script type="math/tex">T</script>, and then compare these assignments to the <em>true</em> Case/Control classifications to compute the true and false positive rates.  We plots these rates for many <script type="math/tex">T</script> to generate the ROC curve.</p>
+
+<p>The ROC let’s you look at how sensitive your model is to various parameterizations – are you able to accurately identify Cases from Controls?  How acceptable are misclassified results?  In this situation, we don’t want to classify someone as healthy when in fact they might develop cardiotoxicity, so we want to allow some flexibility in terms of the number of false positives generated by our model – it’s a classic case of “better safe than sorry”, since the “sorry” outcome might be an accidental patient death.</p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">def</span> <span class="nf">roc</span><span class="p">(</span><span class="n">case</span><span class="p">,</span> <span class="n">control</span><span class="p">,</span> <span class="n">npoints</span><span class="p">,</span> <span class="n">gte</span><span class="o">=</span><span class="bp">True</span><span class="p">):</span>
+    
+    <span class="s">"""
+    Compute ROC curve for given set of Case/Control samples.
+    
+    Parameters:
+    - - - - -
+    case: float, array
+        Samples from case patients
+    control: float, array
+        Samples from control patients
+    npoints: int
+        Number of TP/FP pairs to generate
+    gte: boolean
+        Whether control mean expected to be greater
+        than case mean.
+
+    Returns:
+    - - - -
+    specificity: float, array
+        false positive rates
+    sensitivity: float, array
+        true positive rates
+    """</span>
+
+    <span class="c1"># make sure generating more
+</span>    <span class="c1"># than 1 TP/FP pair
+</span>    <span class="c1"># so we can plot an actual ROC curve
+</span>    <span class="k">assert</span> <span class="n">npoints</span> <span class="o">&gt;</span> <span class="mi">1</span>
+    
+
+    <span class="c1"># made sure case and control samples
+</span>    <span class="c1"># are numpy arrays
+</span>    <span class="n">case</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">case</span><span class="p">)</span>
+    <span class="n">control</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">control</span><span class="p">)</span>
+    
+    <span class="c1"># check for NaN values
+</span>    <span class="c1"># keep only indices without NaN
+</span>    <span class="n">case_nans</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">case</span><span class="p">)</span>
+    <span class="n">cont_nans</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">control</span><span class="p">)</span>
+    <span class="n">nans</span> <span class="o">=</span> <span class="p">(</span><span class="n">case_nans</span> <span class="o">+</span> <span class="n">cont_nans</span><span class="p">)</span>
+    
+    <span class="n">specificity</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">sensitivity</span> <span class="o">=</span> <span class="p">[]</span>
+    
+    <span class="c1"># we'll define the min and max thresholds 
+</span>    <span class="c1"># based on the min and max of our data
+</span>    <span class="n">conc</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">([</span><span class="n">case</span><span class="p">[</span><span class="o">~</span><span class="n">nans</span><span class="p">],</span><span class="n">control</span><span class="p">[</span><span class="o">~</span><span class="n">nans</span><span class="p">]])</span>
+
+    <span class="c1"># function comparison map
+</span>    <span class="c1"># use ```gte``` parameter
+</span>    <span class="c1"># if we expect controls to be less than
+</span>    <span class="c1"># cases, gte = False
+</span>    <span class="c1"># otherwise gte = True
+</span>    <span class="n">comp_map</span> <span class="o">=</span> <span class="p">{</span><span class="s">'False'</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">less</span><span class="p">,</span>
+                <span class="s">'True'</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">greater</span><span class="p">}</span>
+    
+    <span class="c1"># generate npoints equally spaced threshold values
+</span>    <span class="c1"># compute the false positive / true positive rates 
+</span>    <span class="c1"># at each threshold
+</span>    <span class="k">for</span> <span class="n">thresh</span> <span class="ow">in</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="n">conc</span><span class="o">.</span><span class="nb">min</span><span class="p">(),</span> <span class="n">conc</span><span class="o">.</span><span class="nb">max</span><span class="p">(),</span> <span class="n">npoints</span><span class="p">):</span>
+
+        <span class="n">fp</span> <span class="o">=</span> <span class="p">(</span><span class="n">comp_map</span><span class="p">[</span><span class="n">gte</span><span class="p">](</span><span class="n">case</span><span class="p">[</span><span class="o">~</span><span class="n">nans</span><span class="p">],</span> <span class="n">thresh</span><span class="p">))</span><span class="o">.</span><span class="n">mean</span><span class="p">()</span>
+        <span class="n">tn</span> <span class="o">=</span> <span class="mi">1</span><span class="o">-</span><span class="n">fp</span>
+        
+        <span class="n">tp</span> <span class="o">=</span> <span class="p">(</span><span class="n">comp_map</span><span class="p">[</span><span class="n">gte</span><span class="p">](</span><span class="n">control</span><span class="p">[</span><span class="o">~</span><span class="n">nans</span><span class="p">],</span> <span class="n">thresh</span><span class="p">))</span><span class="o">.</span><span class="n">mean</span><span class="p">()</span>
+        <span class="n">fn</span> <span class="o">=</span> <span class="mi">1</span><span class="o">-</span><span class="n">tp</span>
+        
+        <span class="n">specificity</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">tn</span><span class="p">)</span>
+        <span class="n">sensitivity</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">tp</span><span class="p">)</span>
+    
+    <span class="k">return</span> <span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">specificity</span><span class="p">),</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">sensitivity</span><span class="p">)]</span>
+</code></pre></div></div>
+
+<p>Next up, I generate 5 different datasets.  Each dataset corresponds to fake samples from a “Control” distribution, and a “Case” distribution – each is distributed according to a univariate Normal distribution.  The Control distribution remains the same in each scenario: <script type="math/tex">N(\mu = 10, \sigma = 1)</script>, but I change the <script type="math/tex">\mu_{Case}</script> parameter of the Case distribution in each instance, such that <script type="math/tex">\mu_{Case} \in [5,6,7,8,9,10]</script>.</p>
+
+<p>We plot the example datasets as follows, and then compute the ROC curves for each dataset.</p>
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1"># define unique means
+</span><span class="n">m1</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">5</span><span class="p">,</span><span class="mi">11</span><span class="p">)</span>
+<span class="n">samples</span> <span class="o">=</span> <span class="p">{}</span><span class="o">.</span><span class="n">fromkeys</span><span class="p">(</span><span class="n">m1</span><span class="p">)</span>
+
+<span class="c1"># define control distribution (this stays the same across 
+</span><span class="n">n2</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">normal</span><span class="p">(</span><span class="n">loc</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">scale</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span><span class="mi">2000</span><span class="p">)</span>
+
+<span class="n">fig</span><span class="p">,</span> <span class="p">(</span><span class="n">ax</span><span class="p">)</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">15</span><span class="p">,</span> <span class="mi">6</span><span class="p">))</span>
+
+<span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">ax</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">fig</span><span class="o">.</span><span class="n">axes</span><span class="p">):</span>
+
+    <span class="n">n1</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">normal</span><span class="p">(</span><span class="n">loc</span><span class="o">=</span><span class="n">m1</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">scale</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span><span class="mi">2000</span><span class="p">)</span>
+    <span class="n">samples</span><span class="p">[</span><span class="n">m1</span><span class="p">[</span><span class="n">i</span><span class="p">]]</span> <span class="o">=</span> <span class="n">n1</span>
+
+    <span class="n">ax</span><span class="o">.</span><span class="n">hist</span><span class="p">(</span><span class="n">n1</span><span class="p">,</span> <span class="mi">25</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.5</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s">'Case'</span><span class="p">,</span> <span class="n">density</span><span class="o">=</span><span class="bp">True</span><span class="p">,)</span>
+    <span class="n">ax</span><span class="o">.</span><span class="n">hist</span><span class="p">(</span><span class="n">n2</span><span class="p">,</span> <span class="mi">25</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.5</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s">'Control'</span><span class="p">,</span> <span class="n">density</span><span class="o">=</span><span class="bp">True</span><span class="p">,)</span>
+    <span class="n">ax</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s">'Mean: {:}, Sigma: 1'</span><span class="o">.</span><span class="nb">format</span><span class="p">(</span><span class="n">m1</span><span class="p">[</span><span class="n">i</span><span class="p">]),</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">15</span><span class="p">)</span>
+    <span class="n">ax</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="s">'Biomarker Measures Variable'</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">15</span><span class="p">)</span>
+    <span class="n">ax</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="s">'Density'</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">15</span><span class="p">)</span>
+    <span class="n">ax</span><span class="o">.</span><span class="n">legend</span><span class="p">()</span>
+
+<span class="n">plt</span><span class="o">.</span><span class="n">tight_layout</span><span class="p">()</span>
+</code></pre></div></div>
+
+<figure>
+    <img src="/img/dose-response/Example.Histograms.jpg" class="center-image" width="110%" />
+    <figcaption>Example Case/Control datasets.</figcaption>
+</figure>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">fig</span><span class="p">,</span> <span class="p">(</span><span class="n">ax1</span><span class="p">)</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+<span class="k">for</span> <span class="n">mean</span><span class="p">,</span> <span class="n">case_data</span> <span class="ow">in</span> <span class="n">samples</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+
+    <span class="p">[</span><span class="n">spec</span><span class="p">,</span> <span class="n">sens</span><span class="p">]</span> <span class="o">=</span> <span class="n">roc</span><span class="p">(</span><span class="n">case_data</span><span class="p">,</span> <span class="n">n2</span><span class="p">,</span> <span class="mi">100</span><span class="p">,</span> <span class="n">gte</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+    <span class="n">A</span> <span class="o">=</span> <span class="n">auc</span><span class="p">(</span><span class="n">spec</span><span class="p">,</span> <span class="n">sens</span><span class="p">)</span>
+
+    <span class="n">L</span> <span class="o">=</span> <span class="s">'Mean: </span><span class="si">%</span><span class="s">i, AUC: </span><span class="si">%.3</span><span class="s">f'</span> <span class="o">%</span> <span class="p">(</span><span class="n">mean</span><span class="p">,</span> <span class="n">A</span><span class="p">)</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="mi">1</span><span class="o">-</span><span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">spec</span><span class="p">),</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">sens</span><span class="p">),</span> <span class="n">label</span><span class="o">=</span><span class="n">L</span><span class="p">)</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">legend</span><span class="p">(</span><span class="n">bbox_to_anchor</span><span class="o">=</span><span class="p">(</span><span class="mf">1.04</span><span class="p">,</span><span class="mi">1</span><span class="p">),</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">15</span><span class="p">)</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">xlabel</span><span class="p">(</span><span class="s">'1-Specificity'</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">15</span><span class="p">)</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">ylabel</span><span class="p">(</span><span class="s">'Sensitivity'</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">15</span><span class="p">)</span>
+
+    <span class="n">plt</span><span class="o">.</span><span class="n">title</span><span class="p">(</span><span class="s">'ROC for Varying Case Distributions'</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">15</span><span class="p">)</span>
+</code></pre></div></div>
+
+<figure>
+    <img src="/img/dose-response/Example.ROC.Curves.jpg" class="center-image" width="100%" />
+    <figcaption>ROC curves for example datasets.</figcaption>
+</figure>
+
+<p>We see that, as the distributions become less separated, the ability to distinguish points from either distribution is diminished.  This is shown by 1) a flattening of the ROC curve towards the diagonal, along with 2) the integration of the ROC curve, which generates the AUC metric.  When the distributions are far apart (as when the <script type="math/tex">\mu_{Case} = 5</script>), it is quite easy for a simple model to distinguish points sampled from either distribution, meaning this hypothetical model has good diagnostic power.</p>
+
+<h3 id="analyzing-synthetic-dose-response-curves">Analyzing Synthetic Dose-Response Curves</h3>
+
+<p>We now analyze some synthetic data, generated to look like dose-response curves.  As a refresher, dose-response curves measure the behavior of some tissue cells in response to increasing levels of (generally) drugs.  The <script type="math/tex">x</script>-axis is the drug dose, measured in some concentration or volume, and the <script type="math/tex">y</script>-axis is generally some measure of cell death or survival, generally ranging from 0% to 100%.  The curves, however, look sigmoidal.  So let’s first generate a function to create sigmoid curves.</p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">def</span> <span class="nf">sigmoid</span><span class="p">(</span><span class="n">beta</span><span class="p">,</span> <span class="n">intercept</span><span class="p">,</span> <span class="n">x</span><span class="p">):</span>
+    
+    <span class="s">"""
+    Fake sigmoid function, takes in coefficient, shift, and dose values.
+    
+    Parameters:
+    - - - - -
+    beta: float
+        slope
+    intercept: float
+        negative exponential intercept
+    x: float, array
+        data samples
+        
+    Returns:
+    - - - -
+    dose_response: float, array
+        single-subject dose-response vector
+        Between 0 and 1.
+    """</span>
+    
+    <span class="n">dose_resonse</span> <span class="o">=</span>  <span class="mi">1</span> <span class="o">/</span> <span class="p">(</span><span class="mi">1</span> <span class="o">+</span> <span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="o">-</span><span class="n">beta</span><span class="o">*</span><span class="n">x</span> <span class="o">+</span> <span class="n">intercept</span><span class="p">))</span>
+    
+    <span class="k">return</span> <span class="n">dose_resonse</span>
+</code></pre></div></div>
+
+<p>Next, let’s actually generate some synethetic data for a dataset of fake subjects.  I want to incorporate some variability into the Cases and Controls, so I’ll sample the subject parameters from distributions.  In this case, for each subject, I’ll sample the logistic curve slope coefficient from <script type="math/tex">Beta</script> distributions, and the intercept from <script type="math/tex">Normal</script> distributions.  We’ll sample 1000 Cases, and 1000 Controls.</p>
+
+<p>For the slopes, we have</p>
+
+<script type="math/tex; mode=display">% <![CDATA[
+\begin{align}
+\beta_{Control} &\sim Beta(a=5, b=3) \\
+\beta_{Case} &\sim Beta(a=10, b=2)
+\end{align} %]]></script>
+
+<p>and for the intercepts, we have</p>
+
+<script type="math/tex; mode=display">% <![CDATA[
+\begin{align}
+I_{Control} &\sim Normal(\mu=0, \sigma=1) \\
+I_{Case} &\sim Normal(\mu=4, \sigma=1)
+\end{align} %]]></script>
+
+<p>As such, the dose-response curve for individual, $k$, is generated as follows:</p>
+
+<script type="math/tex; mode=display">dr_{k} = \frac{1}{1 + e^{-(\beta_{k}X + I_{k})}}</script>
+
+<p>where <script type="math/tex">\beta_{k}</script> and <script type="math/tex">I_{k}</script> are the slope and intercept values for the given subject.  These distributional parameterizations are arbitrary – I just wanted to be able to incorporate variability across subjects and groups.</p>
+
+<p>Let’s generate some random Case/Control dose-response data and plot the coefficient histograms:</p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1"># n cases and controls
+</span><span class="n">S</span> <span class="o">=</span> <span class="mi">1000</span>
+
+<span class="c1"># dictionary of slopes and intercept values for each subject
+</span><span class="n">controls</span> <span class="o">=</span> <span class="p">{</span><span class="n">k</span><span class="p">:</span> <span class="p">{</span><span class="s">'beta'</span><span class="p">:</span> <span class="bp">None</span><span class="p">,</span>
+                <span class="s">'intercept'</span><span class="p">:</span> <span class="bp">None</span><span class="p">}</span> <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">S</span><span class="p">)}</span>
+<span class="n">cases</span> <span class="o">=</span> <span class="p">{</span><span class="n">k</span><span class="p">:</span> <span class="p">{</span><span class="s">'beta'</span><span class="p">:</span> <span class="bp">None</span><span class="p">,</span>
+             <span class="s">'intercept'</span><span class="p">:</span> <span class="bp">None</span><span class="p">}</span> <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">S</span><span class="p">)}</span>
+
+<span class="c1"># get lists of betas and intercepts
+</span><span class="n">beta_control</span> <span class="o">=</span> <span class="p">[]</span>
+<span class="n">beta_case</span> <span class="o">=</span> <span class="p">[]</span>
+
+<span class="n">intercept_control</span> <span class="o">=</span> <span class="p">[]</span>
+<span class="n">intercept_case</span> <span class="o">=</span> <span class="p">[]</span>
+
+<span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">S</span><span class="p">):</span>
+
+    <span class="n">controls</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="s">'beta'</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">beta</span><span class="p">(</span><span class="n">a</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span> <span class="n">b</span><span class="o">=</span><span class="mi">3</span><span class="p">)</span>
+    <span class="n">controls</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="s">'intercept'</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">normal</span><span class="p">(</span><span class="n">loc</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">scale</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+
+    <span class="n">intercept_control</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">controls</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="s">'intercept'</span><span class="p">])</span>
+    <span class="n">beta_control</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">controls</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="s">'beta'</span><span class="p">])</span>
+
+    <span class="n">cases</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="s">'beta'</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">beta</span><span class="p">(</span><span class="n">a</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">b</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+    <span class="n">cases</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="s">'intercept'</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">normal</span><span class="p">(</span><span class="n">loc</span><span class="o">=</span><span class="mi">4</span><span class="p">,</span> <span class="n">scale</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+
+    <span class="n">intercept_case</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">cases</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="s">'intercept'</span><span class="p">])</span>
+    <span class="n">beta_case</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">cases</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="s">'beta'</span><span class="p">])</span>
+</code></pre></div></div>
+
+<p>Intercept histograms look like two different <script type="math/tex">Normal</script> distributions:</p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">fig</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">12</span><span class="p">,</span> <span class="mi">8</span><span class="p">))</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">hist</span><span class="p">(</span><span class="n">intercept_control</span><span class="p">,</span> <span class="mi">50</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s">'r'</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.5</span><span class="p">,</span> <span class="n">density</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s">'Control'</span><span class="p">);</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">hist</span><span class="p">(</span><span class="n">intercept_case</span><span class="p">,</span> <span class="mi">50</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s">'b'</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.5</span><span class="p">,</span> <span class="n">density</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s">'Case'</span><span class="p">);</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">ylabel</span><span class="p">(</span><span class="s">'Density'</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">15</span><span class="p">);</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">xlabel</span><span class="p">(</span><span class="s">'Intercepts'</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">15</span><span class="p">);</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">title</span><span class="p">(</span><span class="s">'Intercepts Coefficients By Group'</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">15</span><span class="p">);</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">legend</span><span class="p">(</span><span class="n">fontsize</span><span class="o">=</span><span class="mi">15</span><span class="p">);</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">tight_layout</span><span class="p">()</span>
+</code></pre></div></div>
+
+<figure>
+    <img src="/img/dose-response/DR.Intercepts.jpg" class="center-image" width="80%" />
+    <figcaption>Intercept distributions for synthetic dose-response curves.</figcaption>
+</figure>
+
+<p>Slope histograms look like two different <script type="math/tex">Beta</script> distributions:</p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">fig</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">12</span><span class="p">,</span> <span class="mi">8</span><span class="p">))</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">hist</span><span class="p">(</span><span class="n">beta_control</span><span class="p">,</span> <span class="mi">50</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s">'r'</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.5</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s">'Control'</span><span class="p">,</span> <span class="n">density</span><span class="o">=</span><span class="bp">True</span><span class="p">);</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">hist</span><span class="p">(</span><span class="n">beta_case</span><span class="p">,</span> <span class="mi">50</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s">'b'</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.5</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s">'Case'</span><span class="p">,</span> <span class="n">density</span><span class="o">=</span><span class="bp">True</span><span class="p">);</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">ylabel</span><span class="p">(</span><span class="s">'Density'</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">15</span><span class="p">);</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">xlabel</span><span class="p">(</span><span class="s">'Betas'</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">15</span><span class="p">);</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">title</span><span class="p">(</span><span class="s">'Slope Coefficients By Group'</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">15</span><span class="p">);</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">legend</span><span class="p">(</span><span class="n">fontsize</span><span class="o">=</span><span class="mi">15</span><span class="p">);</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">tight_layout</span><span class="p">()</span>
+</code></pre></div></div>
+
+<figure>
+    <img src="/img/dose-response/DR.Slopes.jpg" class="center-image" width="80%" />
+    <figcaption>Slope distributions for synthetic dose-response curves.</figcaption>
+</figure>
+
+<p>Now we’ll generate some fake dose-response curves for each of the 1000 Controls, and 1000 Cases.  We’ll plot a subset of these curves to visualize our cross-group curve variability.</p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1"># define synthetic dose range
+</span><span class="n">doses</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="o">-</span><span class="mi">15</span><span class="p">,</span><span class="mi">15</span><span class="p">,</span><span class="mi">500</span><span class="p">)</span>
+<span class="n">dose_min</span> <span class="o">=</span> <span class="n">doses</span><span class="o">.</span><span class="nb">min</span><span class="p">()</span>
+<span class="n">shifted_dose</span> <span class="o">=</span> <span class="n">doses</span> <span class="o">+</span> <span class="n">np</span><span class="o">.</span><span class="nb">abs</span><span class="p">(</span><span class="n">dose_min</span><span class="p">)</span>
+
+<span class="n">fig</span><span class="p">,</span> <span class="p">(</span><span class="n">ax1</span><span class="p">)</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">12</span><span class="p">,</span> <span class="mi">8</span><span class="p">))</span>
+
+<span class="n">ec50_control</span> <span class="o">=</span> <span class="p">[]</span>
+<span class="n">ec50_case</span> <span class="o">=</span> <span class="p">[]</span>
+
+<span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">S</span><span class="p">):</span>
+
+    <span class="n">control_sample</span> <span class="o">=</span> <span class="n">sigmoid</span><span class="p">(</span><span class="n">controls</span><span class="p">[</span><span class="n">c</span><span class="p">][</span><span class="s">'beta'</span><span class="p">],</span> <span class="n">controls</span><span class="p">[</span><span class="n">c</span><span class="p">][</span><span class="s">'intercept'</span><span class="p">],</span> <span class="n">doses</span><span class="p">)</span>
+    <span class="n">case_sample</span> <span class="o">=</span> <span class="n">sigmoid</span><span class="p">(</span><span class="n">cases</span><span class="p">[</span><span class="n">c</span><span class="p">][</span><span class="s">'beta'</span><span class="p">],</span> <span class="n">cases</span><span class="p">[</span><span class="n">c</span><span class="p">][</span><span class="s">'intercept'</span><span class="p">],</span> <span class="n">doses</span><span class="p">)</span>
+
+    <span class="n">ec50_control</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">shifted_dose</span><span class="p">[</span><span class="n">control_sample</span> <span class="o">&lt;</span> <span class="mf">0.5</span><span class="p">]</span><span class="o">.</span><span class="nb">max</span><span class="p">())</span>
+    <span class="n">ec50_case</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">shifted_dose</span><span class="p">[</span><span class="n">case_sample</span> <span class="o">&lt;</span> <span class="mf">0.5</span><span class="p">]</span><span class="o">.</span><span class="nb">max</span><span class="p">())</span>
+
+    <span class="k">if</span> <span class="p">(</span><span class="n">c</span> <span class="o">%</span> <span class="mi">15</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+
+        <span class="n">ax1</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">shifted_dose</span><span class="p">,</span> <span class="n">control_sample</span><span class="p">,</span> <span class="n">c</span><span class="o">=</span><span class="s">'r'</span><span class="p">,</span> <span class="n">linewidth</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.3</span><span class="p">)</span>
+        <span class="n">ax1</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">shifted_dose</span><span class="p">,</span> <span class="n">case_sample</span><span class="p">,</span> <span class="n">c</span><span class="o">=</span><span class="s">'b'</span><span class="p">,</span> <span class="n">linewidth</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.3</span><span class="p">)</span>
+
+<span class="n">plt</span><span class="o">.</span><span class="n">legend</span><span class="p">({})</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">title</span><span class="p">(</span><span class="s">'Dose Response Curve'</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">20</span><span class="p">);</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">xlabel</span><span class="p">(</span><span class="s">'Dose'</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">20</span><span class="p">);</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">xticks</span><span class="p">(</span><span class="n">fontsize</span><span class="o">=</span><span class="mi">15</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">ylabel</span><span class="p">(</span><span class="s">'Response'</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">20</span><span class="p">);</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">yticks</span><span class="p">(</span><span class="n">fontsize</span><span class="o">=</span><span class="mi">15</span><span class="p">)</span>
+
+<span class="n">custom_lines</span> <span class="o">=</span> <span class="p">[</span><span class="n">Line2D</span><span class="p">([</span><span class="mi">0</span><span class="p">],</span> <span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">color</span><span class="o">=</span><span class="s">'r'</span><span class="p">,</span> <span class="n">lw</span><span class="o">=</span><span class="mi">4</span><span class="p">),</span>
+                <span class="n">Line2D</span><span class="p">([</span><span class="mi">0</span><span class="p">],</span> <span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">color</span><span class="o">=</span><span class="s">'b'</span><span class="p">,</span> <span class="n">lw</span><span class="o">=</span><span class="mi">4</span><span class="p">)]</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">legend</span><span class="p">(</span><span class="n">custom_lines</span><span class="p">,</span> <span class="p">[</span><span class="s">'Control'</span><span class="p">,</span> <span class="s">'Case'</span><span class="p">],</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">20</span><span class="p">);</span>
+</code></pre></div></div>
+
+<figure>
+    <img src="/img/dose-response/DR.Curves.jpg" class="center-image" width="80%" />
+    <figcaption>Case/Control dose-response curves.</figcaption>
+</figure>
+
+<p>For our preliminary biomarker of interest, let’s look at the <strong>ec50</strong>, which is the dose at which <em>50%</em> of the cells show some response (i.e. where our <script type="math/tex">y</script>-axis = 0.5), for each sample in our dataset.  We’ll plot these doses as a function of Cases and Controls.</p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">fig</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">12</span><span class="p">,</span> <span class="mi">8</span><span class="p">))</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">hist</span><span class="p">(</span><span class="n">ec50_control</span><span class="p">,</span> <span class="mi">50</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s">'r'</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.5</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s">'Control'</span><span class="p">,</span> <span class="n">density</span><span class="o">=</span><span class="bp">True</span><span class="p">);</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">hist</span><span class="p">(</span><span class="n">ec50_case</span><span class="p">,</span> <span class="mi">50</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s">'b'</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.5</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s">'Case'</span><span class="p">,</span> <span class="n">density</span><span class="o">=</span><span class="bp">True</span><span class="p">);</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">legend</span><span class="p">(</span><span class="n">fontsize</span><span class="o">=</span><span class="mi">20</span><span class="p">);</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">xlabel</span><span class="p">(</span><span class="s">'ec50'</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">20</span><span class="p">);</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">xticks</span><span class="p">(</span><span class="n">fontsize</span><span class="o">=</span><span class="mi">15</span><span class="p">);</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">ylabel</span><span class="p">(</span><span class="s">'Density'</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">20</span><span class="p">);</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">yticks</span><span class="p">(</span><span class="n">fontsize</span><span class="o">=</span><span class="mi">15</span><span class="p">);</span>
+</code></pre></div></div>
+
+<figure>
+    <img src="/img/dose-response/DR.ec50.jpg" class="center-image" width="80%" />
+    <figcaption>Biomarker distributions: ec50 for Cases and Controls.</figcaption>
+</figure>
+
+<p>If we select a different threshold – i.e. instead of 0.5, we can iterate over the range of 0.1 - 0.9, for example, in increments of 0.1 – we generate different biomarkers (ec10, ec20 … ec90).  We can treat each biomarker as a different classification model, and assess how powerful that model is at assessing whether someone will develop cardiotoxicity or not.  To do so, we’ll create distributions for each biomarker (not shown), and then generate ROC curves and AUC values for each curve.</p>
+
+<figure>
+    <img src="/img/dose-response/DR.ecCurves.All.jpg" class="center-image" width="80%" />
+    <figcaption>ROC curves and AUC for each ec-X biomarker level.</figcaption>
+</figure>
+
+<p>This is where my limited domain knowledge comes at a cost – I’m not sure if the biomarkers I’ve chosen (i.e. incremental <strong>ec</strong> values) are actually biologically relevant.  The point, however, is that each biomarker yields a different AUC, which theoretically shows that the Cases and Controls can be differentially distinguished, depending on which biomarker we choose to examine.  In this case, <strong>ec10</strong> has the most discriminative diagnostic power.</p>
+
+<p>Something I did wonder about while exploring this data was how dependent the ROC curves and AUC statistics are on sample size.  Previously, I’d looked at rates of convergence of various estimators – the AUC should also theoretically show some convergence to a “true” value as <script type="math/tex">n</script> increases – but I’m not sure if it follows any sort of relevant distribution.  I imagine the AUC is domain-dependent, in that it depends on the distribution of the biomarker of interest?  Might be a good idea for another post…</p>
+
+<p>Cheers.</p>
+
+
+        <hr>
+
+        <div class="clearfix">
+
+          
+          <a class="btn btn-primary float-left" href="/2019/08/list-size" data-toggle="tooltip" data-placement="top" title="Quick Note: Initialize Python List With Prespecified Size">&larr; Previous<span class="d-none d-md-inline">
+              Post</span></a>
+          
+          
+
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+
+  <!-- Footer -->
+
+<hr>
+
+<footer>
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-8 col-md-10 mx-auto">
+                <ul class="list-inline text-center">
+                    
+                    <li class="list-inline-item">
+                        <a href="mailto:keschenb@uw.edu">
+                            <span class="fa-stack fa-lg">
+                                <i class="fas fa-circle fa-stack-2x"></i>
+                                <i class="far fa-envelope fa-stack-1x fa-inverse"></i>
+                            </span>
+                        </a>
+                    </li>
+                    
+                    
+                    <li class="list-inline-item">
+                        <a href="https://twitter.com/keschh">
+                            <span class="fa-stack fa-lg">
+                                <i class="fas fa-circle fa-stack-2x"></i>
+                                <i class="fab fa-twitter fa-stack-1x fa-inverse"></i>
+                            </span>
+                        </a>
+                    </li>
+                    
+                    
+                    
+                    <li class="list-inline-item">
+                        <a href="https://www.linkedin.com/in/kristianeschenburg">
+                            <span class="fa-stack fa-lg">
+                                <i class="fas fa-circle fa-stack-2x"></i>
+                                <i class="fab fa-linkedin fa-stack-1x fa-inverse"></i>
+                            </span>
+                        </a>
+                    </li>
+                    
+                    
+                    <li class="list-inline-item">
+                        <a href="https://github.com/kristianeschenburg">
+                            <span class="fa-stack fa-lg">
+                                <i class="fas fa-circle fa-stack-2x"></i>
+                                <i class="fab fa-github fa-stack-1x fa-inverse"></i>
+                            </span>
+                        </a>
+                    </li>
+                    
+                </ul>
+                <p class="copyright text-muted">Copyright &copy; Kristian M. Eschenburg 2020</p>
+            </div>
+        </div>
+    </div>
+</footer>
+
+  
+<script type="text/javascript" async src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-MML-AM_CHTML">
+</script>
+
+
+<script src="/assets/vendor/jquery/jquery.min.js"></script>
+<script src="/assets/vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
+<script src="/assets/vendor/startbootstrap-clean-blog/js/clean-blog.min.js"></script>
+
+<script src="/assets/scripts.js"></script>
+
+
+
+</body>
+
+</html>

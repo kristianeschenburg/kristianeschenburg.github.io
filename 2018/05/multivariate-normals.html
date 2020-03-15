@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+
+    <title>
+        Multivariate Normal Distribution - A Rambling On
+        
+    </title>
+
+    <meta name="description"
+        content="In this post, I’ll be covering the basics of Multivariate Normal Distributions, with special emphasis on deriving the conditional and marginal distributions.">
+
+    <link href='https://fonts.googleapis.com/css?family=Lora:400,700,400italic,700italic' rel='stylesheet'
+        type='text/css'>
+    <link
+        href='https://fonts.googleapis.com/css?family=Open+Sans:300italic,400italic,600italic,700italic,800italic,400,300,600,700,800'
+        rel='stylesheet' type='text/css'>
+
+    <link rel="stylesheet" href="/assets/vendor/bootstrap/css/bootstrap.min.css">
+
+    <link rel="stylesheet" href="/assets/vendor/fontawesome-free/css/all.min.css">
+
+    <link rel="stylesheet" href="/assets/main.css">
+    <link rel="canonical" href="http://kristianeschenburg.github.io/2018/05/multivariate-normals">
+    <link rel="alternate" type="application/rss+xml" title="A Rambling On"
+        href="/feed.xml">
+
+</head>
+
+<body>
+
+  <!-- Navigation -->
+<nav class="navbar navbar-expand-lg navbar-light fixed-top" id="mainNav">
+    <div class="container">
+        <a class="navbar-brand" href="/">A Rambling On</a>
+        <button class="navbar-toggler navbar-toggler-right" type="button" data-toggle="collapse"
+            data-target="#navbarResponsive" aria-controls="navbarResponsive" aria-expanded="false"
+            aria-label="Toggle navigation">
+            Menu
+            <i class="fa fa-bars"></i>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarResponsive">
+            <ul class="navbar-nav ml-auto">
+
+                <!-- Home -->
+                <li class="nav-item">
+                    <a class="nav-link" href="/">Home</a>
+                </li>
+                
+                <!-- Posts -->
+                <li class="nav-item">
+                    <a class="nav-link" href="/posts">Posts</a>
+                </li>
+
+                <!-- Code -->
+                <li class="nav-item">
+                    <a class="nav-link" href="/code">Code</a>
+                </li>
+
+                <!-- Resume -->
+                <li class="nav-item">
+                    <a class="nav-link" href="/resume">Resume</a>
+                </li>
+
+                <!-- About Me -->
+                <li class="nav-item">
+                    <a class="nav-link" href="/about">About</a>
+                </li>
+            </ul>
+        </div>
+    </div>
+</nav>
+
+  <!-- Page Header -->
+
+  <header class="masthead">
+    
+    <div class="overlay"></div>
+    <div class="container">
+      <div class="row">
+        <div class="col-lg-8 col-md-10 mx-auto">
+          <div class="post-heading">
+            <h1>Multivariate Normal Distribution</h1>
+            
+            <span class="meta">Posted by
+              <a href="#">Kristian M. Eschenburg</a>
+              on May 12, 2018 &middot; <span class="reading-time" title="Estimated read time">
+    
+     5 mins  read </span>
+            </span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <div class="container">
+    <div class="row">
+      <div class="col-lg-8 col-md-10 mx-auto">
+
+        <p>In this post, I’ll be covering the basics of Multivariate Normal Distributions, with special emphasis on deriving the conditional and marginal distributions.</p>
+
+<p>Given a random variable under the usual Gauss-Markov assumptions, with <script type="math/tex">y_{i} \sim N(\mu, \sigma^{2})</script> with <script type="math/tex">e \sim N(0,\sigma^{2})</script>, and <script type="math/tex">N</script> independent samples <script type="math/tex">y_{1}...y_{n}</script>, we can define vector <script type="math/tex">\mathbf{y} = [y_{1}, y_{2},...y_{n}] \sim N_{n}(\mathbf{\mu},\sigma^{2}I)</script> with <script type="math/tex">\mathbf{e} \sim N_{n}(\mathbf{0},\sigma^{2}I)</script>.  We can see from the covariance structure of the errors that all off-diagonal elements are 0, indicating that our samples are independent with equal variances.</p>
+
+<p><strong>Marginal Distributions</strong></p>
+
+<p>Now assume that <script type="math/tex">\mathbf{y} = \[\mathbf{y_{1}}, \mathbf{y_{2}} \] \sim N(\mathbf{\mu},\Sigma)</script>, where <script type="math/tex">\mathbf{\mu} = \begin{bmatrix} \mu_{1} \\ \mu_{2} \end{bmatrix}</script>, and <script type="math/tex">\Sigma</script> is an arbitrary covariance matrix, where we cannot assume independence.  If <script type="math/tex">\Sigma</script> is non-singular, we can decompose <script type="math/tex">\Sigma</script> as</p>
+
+<script type="math/tex; mode=display">% <![CDATA[
+\Sigma = \begin{bmatrix}
+\Sigma_{11} & \Sigma_{21}^{T} \\
+\Sigma_{21} & \Sigma_{22}
+\end{bmatrix} %]]></script>
+
+<p>and, using the inversion lemmas from <a href="/2018/05/blockwise-matrix-inversion">Blockwise Matrix Inversion</a>, define its inverse <script type="math/tex">\Sigma^{-1} = V</script> as</p>
+
+<script type="math/tex; mode=display">% <![CDATA[
+V = \begin{bmatrix}
+V_{11} & V_{21}^{T} \\
+V_{21} & V_{22} \\
+\end{bmatrix}
+\begin{bmatrix}
+(\Sigma_{11} - \Sigma_{12}\Sigma_{22}^{-1}\Sigma_{21})^{-1} & -\Sigma^{-1}\Sigma_{12}(\Sigma_{22} - \Sigma_{21}\Sigma_{11}^{-1}\Sigma_{12})^{-1} \\
+-\Sigma_{22}^{-1}\Sigma_{21}(\Sigma_{11}-\Sigma_{12}\Sigma_{22}^{-1}\Sigma_{21})^{-1} & (\Sigma_{22} - \Sigma_{21}\Sigma_{11}^{-1}\Sigma_{12})^{-1}
+\end{bmatrix} %]]></script>
+
+<p>From the properties of transformations of Normal random variables, we can define the marginal of <script type="math/tex">y_{1}</script> as</p>
+
+<script type="math/tex; mode=display">\begin{align}
+By \sim N(B\mu,B\Sigma B^{T})
+\end{align}</script>
+
+<p>where <script type="math/tex">% <![CDATA[
+B = \begin{bmatrix} \mathbf{I} & 0 \end{bmatrix} %]]></script> such that</p>
+
+<p><script type="math/tex">% <![CDATA[
+\begin{bmatrix} \mathbf{I} & 0 \end{bmatrix} \begin{bmatrix} \mathbf{\mu_{1}} \\ \mathbf{\mu_{2}} \end{bmatrix} = \mathbf{\mu_{1}} %]]></script>
+<script type="math/tex">% <![CDATA[
+\begin{bmatrix} \mathbf{I} & 0
+\end{bmatrix} \begin{bmatrix}
+\Sigma_{11} & \Sigma_{12} \\
+\Sigma_{21} & \Sigma_{22}
+\end{bmatrix}
+\begin{bmatrix}
+\mathbf{I} \\
+0
+\end{bmatrix} = \Sigma_{11} %]]></script></p>
+
+<p>so that <script type="math/tex">\mathbf{y_{1}} \sim N(\mathbf{\mu_{1}},\Sigma_{11})</script>.</p>
+
+<p><strong>Conditional Distributions</strong></p>
+
+<p>Showing the conditional distribution is a bit long-winded, so bear with me.  We are interested in finding the distribution of <script type="math/tex">y_{2}\mid y_{1}</script>, which we can explicitly represent as</p>
+
+<script type="math/tex; mode=display">\begin{align}
+f_{y_{1}}(y_{2} \mid y_{1}) = \frac{f_{y_{1},y_{2}}(y_{1},y_{2})}{f_{y_{1}}(y_{1})}
+\end{align}</script>
+
+<p>Writing out the joint density for <script type="math/tex">y</script>, we have the following</p>
+
+<script type="math/tex; mode=display">\begin{align}
+f(y) =  \frac{1}{(2\pi)^{n/2}\mid \Sigma \mid ^{1/2}}\exp^{(-1/2)(y-\mu)^{T}\Sigma^{-1}(y-\mu)}
+\end{align}</script>
+
+<p>Partitioning this expression up into the individual terms related to <script type="math/tex">y_{1}</script> and <script type="math/tex">y_{2}</script>, the exponent becomes</p>
+
+<script type="math/tex; mode=display">% <![CDATA[
+(y-\mu)^{T}V(y-\mu) = \begin{bmatrix}
+y_{1} - \mu_{1} \\
+y_{2} - \mu_{2} \end{bmatrix}^{T}
+\begin{bmatrix}
+V_{11} & V_{12} \\
+V_{21} & V_{22} \end{bmatrix}
+\begin{bmatrix}
+y_{1} - \mu_{1} \\
+y_{2} - \mu_{2}
+\end{bmatrix} %]]></script>
+
+<p>Expanding this quadratic form out, we see that we end up with</p>
+
+<script type="math/tex; mode=display">\begin{align}
+(y_{1} - \mu_{1})^{T} V_{11}^{-1}(y_{1}-\mu_{1}) + 2(y_{1}-\mu_{1})^{T}V_{12}(y_{2}-\mu_{2}) + (y_{2} - \mu_{2})^{T}V_{22}(y_{2}-\mu_{2})
+\end{align}</script>
+
+<p>Let us, for simpliciy set <script type="math/tex">z_{1} = (y_{1} - \mu_{1})</script> and <script type="math/tex">z_{2} = (y_{2} - \mu_{2})</script>.  Substituting back in our definitions of <script type="math/tex">V_{11}$,$V_{12}$,$V_{21}</script>, and <script type="math/tex">V_{22}</script>, and and using the Sherman-Morrison-Woodbury definition for <script type="math/tex">V_{11}</script>, we have the following</p>
+
+<script type="math/tex; mode=display">% <![CDATA[
+\begin{align}
+&z_{1}^{T}(\Sigma_{11}^{-1} + \Sigma_{11}^{-1}\Sigma_{12}(\Sigma_{22} - \Sigma_{21}\Sigma_{11}^{-1}\Sigma_{12})^{-1}\Sigma_{21}\Sigma_{11})z_{1} \\
+&- 2z_{1}^{T}(\Sigma_{11}^{-1}\Sigma_{12}(\Sigma_{22} - \Sigma_{21}\Sigma_{11}^{-1}\Sigma_{12}^{-1})^{-1})z_{2} \\
+&+ z_{2}^{T}(\Sigma_{22} - \Sigma_{21}\Sigma_{11}^{-1}\Sigma_{12})^{-1})z_{2}
+\end{align} %]]></script>
+
+<p>which, by distribution of <script type="math/tex">z_{1}</script> across the first term and splitting the second term into its two sums, we have</p>
+
+<script type="math/tex; mode=display">% <![CDATA[
+\begin{align}
+&z_{1}^{T}\Sigma_{11}^{-1}z_{11} + z_{1}^{T}\Sigma_{11}^{-1}\Sigma_{12}(\Sigma_{22} - \Sigma_{21}V_{11}^{-1}\Sigma_{12})^{-1}\Sigma_{21}\Sigma_{11}^{-1}z_{1} \\
+&- z_{1}^{T}(\Sigma_{11}^{-1}\Sigma_{12}(\Sigma_{22} - \Sigma_{21}\Sigma_{11}^{-1}\Sigma_{12})^{-1})z_{2} - z_{1}^{T}(\Sigma_{11}^{-1}\Sigma_{12}(\Sigma_{22} - \Sigma_{21}\Sigma_{11}^{-1}\Sigma_{12})^{-1})z_{2} \\
+&+ z_{2}^{T}(\Sigma_{22} - \Sigma_{21}\Sigma_{11}^{-1}\Sigma_{12})^{-1})z_{2}
+\end{align} %]]></script>
+
+<p>We can pull out forms <script type="math/tex">z_{1}^{T}\Sigma_{11}^{-1}\Sigma_{12}(\Sigma_{22}-\Sigma_{21}\Sigma_{11}^{-1}\Sigma_{12})^{-1}</script> to the left and <script type="math/tex">(\Sigma_{22}-\Sigma_{21}\Sigma_{11}^{-1}\Sigma_{12})^{-1}z_{2}</script> to the right and, after applying a transpose, have</p>
+
+<script type="math/tex; mode=display">\begin{align}
+=z_{1}^{T}\Sigma_{11}^{-1}z_{11} + (z_{2} -\Sigma_{21}\Sigma_{11}^{-1}z_{1})^{T}(\Sigma_{22} - \Sigma_{21}\Sigma_{11}^{-1}\Sigma_{12})^{-1}(z_{2} - \Sigma_{21}\Sigma_{11}^{-1}z_{1})
+\end{align}</script>
+
+<p>Plugging the above back into our exponential term in our original density function, we see that we have a product of two exponential terms</p>
+
+<script type="math/tex; mode=display">% <![CDATA[
+\begin{align}
+&\frac{1}{(2\pi)^{p/2}\mid \Sigma_{11} \mid^{1/2}} \exp(\frac{-1}{2}(z_{1}^{T}\Sigma_{11}^{-1}z_{11})) \\
+\end{align} %]]></script>
+
+<p>and</p>
+
+<script type="math/tex; mode=display">% <![CDATA[
+\begin{align}
+&\frac{1}{(2\pi)^{q/2}\mid \Sigma_{22} - \Sigma_{21}\Sigma_{11}^{-1}\Sigma_{12} \mid ^{1/2}}\exp(\frac{-1}{2}(z_{2} - z_{1}\Sigma_{11}^{-1}\Sigma_{12})^{T}(\Sigma_{22} - \Sigma_{21}\Sigma_{11}^{-1}\Sigma_{12})^{-1}(z_{2} - \Sigma_{21}\Sigma_{11}^{-1}z_{1}))
+\end{align} %]]></script>
+
+<p>where the first term is the marginal density of <script type="math/tex">y_{1}</script> and the second is the conditional density of <script type="math/tex">y_{2} \mid y_{1}</script> with conditional mean <script type="math/tex">\mu_{2\mid 1} = \mu_{2} + \Sigma_{11}^{-1}\Sigma_{12}(y_{1} - \mu_{1})</script> and conditional variance <script type="math/tex">\Sigma_{2\mid 1} = \Sigma_{22} - \Sigma_{21}\Sigma_{11}^{-1}\Sigma_{12}</script>.</p>
+
+<p>While long and drawn out, the formulas show that the conditional distribution of any subset of Normal random variables, given another subset, is also a Normal distribution, with conditional mean and variance defined by functions of the means and covariances of the original random vector.</p>
+
+
+        <hr>
+
+        <div class="clearfix">
+
+          
+          <a class="btn btn-primary float-left" href="/2018/05/rank-one-updates" data-toggle="tooltip" data-placement="top" title="Rank-One Updates">&larr; Previous<span class="d-none d-md-inline">
+              Post</span></a>
+          
+          
+          <a class="btn btn-primary float-right" href="/2018/05/dynamic-mode-decomposition-part-1" data-toggle="tooltip" data-placement="top" title="Exploring Dynamical Systems With DMD: Part 1">Next<span class="d-none d-md-inline">
+              Post</span> &rarr;</a>
+          
+
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+
+  <!-- Footer -->
+
+<hr>
+
+<footer>
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-8 col-md-10 mx-auto">
+                <ul class="list-inline text-center">
+                    
+                    <li class="list-inline-item">
+                        <a href="mailto:keschenb@uw.edu">
+                            <span class="fa-stack fa-lg">
+                                <i class="fas fa-circle fa-stack-2x"></i>
+                                <i class="far fa-envelope fa-stack-1x fa-inverse"></i>
+                            </span>
+                        </a>
+                    </li>
+                    
+                    
+                    <li class="list-inline-item">
+                        <a href="https://twitter.com/keschh">
+                            <span class="fa-stack fa-lg">
+                                <i class="fas fa-circle fa-stack-2x"></i>
+                                <i class="fab fa-twitter fa-stack-1x fa-inverse"></i>
+                            </span>
+                        </a>
+                    </li>
+                    
+                    
+                    
+                    <li class="list-inline-item">
+                        <a href="https://www.linkedin.com/in/kristianeschenburg">
+                            <span class="fa-stack fa-lg">
+                                <i class="fas fa-circle fa-stack-2x"></i>
+                                <i class="fab fa-linkedin fa-stack-1x fa-inverse"></i>
+                            </span>
+                        </a>
+                    </li>
+                    
+                    
+                    <li class="list-inline-item">
+                        <a href="https://github.com/kristianeschenburg">
+                            <span class="fa-stack fa-lg">
+                                <i class="fas fa-circle fa-stack-2x"></i>
+                                <i class="fab fa-github fa-stack-1x fa-inverse"></i>
+                            </span>
+                        </a>
+                    </li>
+                    
+                </ul>
+                <p class="copyright text-muted">Copyright &copy; Kristian M. Eschenburg 2020</p>
+            </div>
+        </div>
+    </div>
+</footer>
+
+  
+<script type="text/javascript" async src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-MML-AM_CHTML">
+</script>
+
+
+<script src="/assets/vendor/jquery/jquery.min.js"></script>
+<script src="/assets/vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
+<script src="/assets/vendor/startbootstrap-clean-blog/js/clean-blog.min.js"></script>
+
+<script src="/assets/scripts.js"></script>
+
+
+
+</body>
+
+</html>

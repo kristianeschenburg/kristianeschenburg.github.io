@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+
+    <title>
+        Exploring Dynamical Systems With DMD: Part 2 - A Rambling On
+        
+    </title>
+
+    <meta name="description"
+        content="In my previous post on Dynamic Mode Decomposition, I discussed the foundations of DMD as a means for linearizing a dynamical system. In this post, I want to ...">
+
+    <link href='https://fonts.googleapis.com/css?family=Lora:400,700,400italic,700italic' rel='stylesheet'
+        type='text/css'>
+    <link
+        href='https://fonts.googleapis.com/css?family=Open+Sans:300italic,400italic,600italic,700italic,800italic,400,300,600,700,800'
+        rel='stylesheet' type='text/css'>
+
+    <link rel="stylesheet" href="/assets/vendor/bootstrap/css/bootstrap.min.css">
+
+    <link rel="stylesheet" href="/assets/vendor/fontawesome-free/css/all.min.css">
+
+    <link rel="stylesheet" href="/assets/main.css">
+    <link rel="canonical" href="http://kristianeschenburg.github.io/2018/05/dynamic-mode-decomposition-part-2">
+    <link rel="alternate" type="application/rss+xml" title="A Rambling On"
+        href="/feed.xml">
+
+</head>
+
+<body>
+
+  <!-- Navigation -->
+<nav class="navbar navbar-expand-lg navbar-light fixed-top" id="mainNav">
+    <div class="container">
+        <a class="navbar-brand" href="/">A Rambling On</a>
+        <button class="navbar-toggler navbar-toggler-right" type="button" data-toggle="collapse"
+            data-target="#navbarResponsive" aria-controls="navbarResponsive" aria-expanded="false"
+            aria-label="Toggle navigation">
+            Menu
+            <i class="fa fa-bars"></i>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarResponsive">
+            <ul class="navbar-nav ml-auto">
+
+                <!-- Home -->
+                <li class="nav-item">
+                    <a class="nav-link" href="/">Home</a>
+                </li>
+                
+                <!-- Posts -->
+                <li class="nav-item">
+                    <a class="nav-link" href="/posts">Posts</a>
+                </li>
+
+                <!-- Code -->
+                <li class="nav-item">
+                    <a class="nav-link" href="/code">Code</a>
+                </li>
+
+                <!-- Resume -->
+                <li class="nav-item">
+                    <a class="nav-link" href="/resume">Resume</a>
+                </li>
+
+                <!-- About Me -->
+                <li class="nav-item">
+                    <a class="nav-link" href="/about">About</a>
+                </li>
+            </ul>
+        </div>
+    </div>
+</nav>
+
+  <!-- Page Header -->
+
+  <header class="masthead">
+    
+    <div class="overlay"></div>
+    <div class="container">
+      <div class="row">
+        <div class="col-lg-8 col-md-10 mx-auto">
+          <div class="post-heading">
+            <h1>Exploring Dynamical Systems With DMD: Part 2</h1>
+            
+            <span class="meta">Posted by
+              <a href="#">Kristian M. Eschenburg</a>
+              on May 24, 2018 &middot; <span class="reading-time" title="Estimated read time">
+    
+     4 mins  read </span>
+            </span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <div class="container">
+    <div class="row">
+      <div class="col-lg-8 col-md-10 mx-auto">
+
+        <p>In my previous post on <a href="/2018/05/dynamic-mode-decomposition-part-1">Dynamic Mode Decomposition</a>, I discussed the foundations of DMD as a means for linearizing a dynamical system.  In this post, I want to look at a way in which we can use rank-updates to incorporate new information into the spectral decomposition of our linear operator, <script type="math/tex">A</script>, in the event that we are generating online measurements from our dynamical system.  If you want a more-detailed overview of this topic, <a href="#zhang_dmd">(Zhang, Rowley, Deem, &amp; Cattafesta, 2017)</a> developed the theory, along with open source code, for testing this method.</p>
+
+<p>Recall that we are given an initial data matrix</p>
+
+<script type="math/tex; mode=display">% <![CDATA[
+\begin{align}
+X = \begin{bmatrix}
+x_{n_{1},m_{1}} & x_{n_{1},m_{2}} & x_{n_{1},m_{3}} & ... \\
+x_{n_{2},m_{1}} & x_{n_{1},m_{2}} & x_{n_{2},m_{3}} & ... \\
+x_{n_{3},m_{1}} & x_{n_{1},m_{2}} & x_{n_{3},m_{3}} & ... \\
+... & ... & ... & ... \\
+\end{bmatrix}
+\in R^{n \times m}
+\end{align} %]]></script>
+
+<p>which we can split into two matrices, shifted one unit in time apart:</p>
+
+<script type="math/tex; mode=display">% <![CDATA[
+\begin{align}
+X^{\ast} &=
+\begin{bmatrix}
+\vert & \vert & & \vert \\
+\vec{x}_1 & \vec{x}_2  & \dots & \vec{x}_{m-1}  \\
+\vert & \vert & & \vert \\
+\end{bmatrix} \in R^{n \times (m-1)} \\
+Y &= \begin{bmatrix}
+\vert & \vert & & \vert \\
+\vec{x}_2 & \vec{x}_3  & \dots & \vec{x}_{m}  \\
+\vert & \vert & & \vert \\
+\end{bmatrix} \in R^{n \times (m-1)}
+\end{align} %]]></script>
+
+<p>and we are interested in solving for the linear operator $A$, such that</p>
+
+<script type="math/tex; mode=display">\begin{align}
+Y = AX^{\ast}
+\end{align}</script>
+
+<p>For simplicity, since we are no longer using the full matrix, I’ll just refer to <script type="math/tex">X^{\ast}</script> as <script type="math/tex">X</script>.  In the previous post, we made the constraint that <script type="math/tex">n > m</script>, and that rank(<script type="math/tex">X</script>) <script type="math/tex">% <![CDATA[
+\leq m < n %]]></script>.  Here, however, we’ll reverse this assumption, and such that <script type="math/tex">m > n</script>, and that rank(<script type="math/tex">X</script>) <script type="math/tex">% <![CDATA[
+\leq m < n %]]></script>, such that <script type="math/tex">XX^{T}</script> is invertible, so by multiplying both sides by <script type="math/tex">X^{T}</script> we have</p>
+
+<script type="math/tex; mode=display">% <![CDATA[
+\begin{align}
+AXX^{T} &= YX^{T} \\
+A &= YX^{T}(XX^{T})^{-1} \\
+A &= QP_{x}
+\end{align} %]]></script>
+
+<p>where <script type="math/tex">Q = YX^{T}</script> and <script type="math/tex">P_{x} = (XX^{T})^{-1}</script>.  Now, let’s say you observe some new data <script type="math/tex">x_{m+1}, y_{m+1}</script>, and you want to incorporate this new data into your $A$ matrix.  As in the previous post on <a href="/2018/05/rank-one-updates">Rank-One Updates</a>, we saw that directly computing the inverse could potentially be costly, so we want to refrain from doing that if possible.  Instead, we’ll use the Shermann-Morrison-Woodbury theorem again to incorporate our new $x_{m+1}$ sample into our inverse matrix, just as before:</p>
+
+<script type="math/tex; mode=display">\begin{align}
+(X_{m+1}X^{T}_{m+1})^{-1} = P_{x} + \frac{P_{x}x_{m+1}x_{m+1}^{T}P_{x}}{1 + x_{m+1}^{T}P_{x}x_{m+1}}
+\end{align}</script>
+
+<p>Likewise, since we’re appending new data to our <script type="math/tex">Y</script> and <script type="math/tex">X</script> matrices, we also have</p>
+
+<script type="math/tex; mode=display">% <![CDATA[
+\begin{align}
+Y_{m+1} = \begin{bmatrix}
+Y & y_{m+1} \end{bmatrix} \\ \\
+X_{m+1} = \begin{bmatrix}
+X & x_{m+1} \end{bmatrix} \\
+\end{align} %]]></script>
+
+<p>such that</p>
+
+<script type="math/tex; mode=display">% <![CDATA[
+\begin{align}
+Y_{m+1} X_{m+1}^{T} &= YX^{T} + y_{m+1}x_{m+1}^{T} \\
+&= Q + y_{m+1}x_{m+1}^{T}
+\end{align} %]]></script>
+
+<p>which is simply the sum of our original matrix <script type="math/tex">Q</script>, plus a rank-one matrix.  <a href="#zhang_dmd">(Zhang, Rowley, Deem, &amp; Cattafesta, 2017)</a> go on to describe some pretty cool “local” DMD schemes, by incorporating weights, as well as binary thresholds, that are time-dependent into the computation of the linear operator, $A$.</p>
+
+<ol class="bibliography"><li><span id="zhang_dmd">Zhang, H., Rowley, C., Deem, E., &amp; Cattafesta, L. (2017). Online Dynamic Mode Decomposition For Time-Varying Systems. <i>ArXiv</i>.</span></li></ol>
+
+
+        <hr>
+
+        <div class="clearfix">
+
+          
+          <a class="btn btn-primary float-left" href="/2018/05/dynamic-mode-decomposition-part-1" data-toggle="tooltip" data-placement="top" title="Exploring Dynamical Systems With DMD: Part 1">&larr; Previous<span class="d-none d-md-inline">
+              Post</span></a>
+          
+          
+          <a class="btn btn-primary float-right" href="/2018/08/rendering-latex" data-toggle="tooltip" data-placement="top" title="Rendering LaTex In Markdown Using Jekyll">Next<span class="d-none d-md-inline">
+              Post</span> &rarr;</a>
+          
+
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+
+  <!-- Footer -->
+
+<hr>
+
+<footer>
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-8 col-md-10 mx-auto">
+                <ul class="list-inline text-center">
+                    
+                    <li class="list-inline-item">
+                        <a href="mailto:keschenb@uw.edu">
+                            <span class="fa-stack fa-lg">
+                                <i class="fas fa-circle fa-stack-2x"></i>
+                                <i class="far fa-envelope fa-stack-1x fa-inverse"></i>
+                            </span>
+                        </a>
+                    </li>
+                    
+                    
+                    <li class="list-inline-item">
+                        <a href="https://twitter.com/keschh">
+                            <span class="fa-stack fa-lg">
+                                <i class="fas fa-circle fa-stack-2x"></i>
+                                <i class="fab fa-twitter fa-stack-1x fa-inverse"></i>
+                            </span>
+                        </a>
+                    </li>
+                    
+                    
+                    
+                    <li class="list-inline-item">
+                        <a href="https://www.linkedin.com/in/kristianeschenburg">
+                            <span class="fa-stack fa-lg">
+                                <i class="fas fa-circle fa-stack-2x"></i>
+                                <i class="fab fa-linkedin fa-stack-1x fa-inverse"></i>
+                            </span>
+                        </a>
+                    </li>
+                    
+                    
+                    <li class="list-inline-item">
+                        <a href="https://github.com/kristianeschenburg">
+                            <span class="fa-stack fa-lg">
+                                <i class="fas fa-circle fa-stack-2x"></i>
+                                <i class="fab fa-github fa-stack-1x fa-inverse"></i>
+                            </span>
+                        </a>
+                    </li>
+                    
+                </ul>
+                <p class="copyright text-muted">Copyright &copy; Kristian M. Eschenburg 2020</p>
+            </div>
+        </div>
+    </div>
+</footer>
+
+  
+<script type="text/javascript" async src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-MML-AM_CHTML">
+</script>
+
+
+<script src="/assets/vendor/jquery/jquery.min.js"></script>
+<script src="/assets/vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
+<script src="/assets/vendor/startbootstrap-clean-blog/js/clean-blog.min.js"></script>
+
+<script src="/assets/scripts.js"></script>
+
+
+
+</body>
+
+</html>

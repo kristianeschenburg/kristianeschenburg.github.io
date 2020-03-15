@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+
+    <title>
+        Convergence In Probability Using Python - A Rambling On
+        
+    </title>
+
+    <meta name="description"
+        content="I’m going over Chapter 5 in Casella and Berger’s (CB) “Statistical Inference”, specifically Section 5.5: Convergence Concepts, and wanted to document the top...">
+
+    <link href='https://fonts.googleapis.com/css?family=Lora:400,700,400italic,700italic' rel='stylesheet'
+        type='text/css'>
+    <link
+        href='https://fonts.googleapis.com/css?family=Open+Sans:300italic,400italic,600italic,700italic,800italic,400,300,600,700,800'
+        rel='stylesheet' type='text/css'>
+
+    <link rel="stylesheet" href="/assets/vendor/bootstrap/css/bootstrap.min.css">
+
+    <link rel="stylesheet" href="/assets/vendor/fontawesome-free/css/all.min.css">
+
+    <link rel="stylesheet" href="/assets/main.css">
+    <link rel="canonical" href="http://kristianeschenburg.github.io/2018/11/convergence">
+    <link rel="alternate" type="application/rss+xml" title="A Rambling On"
+        href="/feed.xml">
+
+</head>
+
+<body>
+
+  <!-- Navigation -->
+<nav class="navbar navbar-expand-lg navbar-light fixed-top" id="mainNav">
+    <div class="container">
+        <a class="navbar-brand" href="/">A Rambling On</a>
+        <button class="navbar-toggler navbar-toggler-right" type="button" data-toggle="collapse"
+            data-target="#navbarResponsive" aria-controls="navbarResponsive" aria-expanded="false"
+            aria-label="Toggle navigation">
+            Menu
+            <i class="fa fa-bars"></i>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarResponsive">
+            <ul class="navbar-nav ml-auto">
+
+                <!-- Home -->
+                <li class="nav-item">
+                    <a class="nav-link" href="/">Home</a>
+                </li>
+                
+                <!-- Posts -->
+                <li class="nav-item">
+                    <a class="nav-link" href="/posts">Posts</a>
+                </li>
+
+                <!-- Code -->
+                <li class="nav-item">
+                    <a class="nav-link" href="/code">Code</a>
+                </li>
+
+                <!-- Resume -->
+                <li class="nav-item">
+                    <a class="nav-link" href="/resume">Resume</a>
+                </li>
+
+                <!-- About Me -->
+                <li class="nav-item">
+                    <a class="nav-link" href="/about">About</a>
+                </li>
+            </ul>
+        </div>
+    </div>
+</nav>
+
+  <!-- Page Header -->
+
+  <header class="masthead">
+    
+    <div class="overlay"></div>
+    <div class="container">
+      <div class="row">
+        <div class="col-lg-8 col-md-10 mx-auto">
+          <div class="post-heading">
+            <h1>Convergence In Probability Using Python</h1>
+            
+            <span class="meta">Posted by
+              <a href="#">Kristian M. Eschenburg</a>
+              on November 28, 2018 &middot; <span class="reading-time" title="Estimated read time">
+    
+     8 mins  read </span>
+            </span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <div class="container">
+    <div class="row">
+      <div class="col-lg-8 col-md-10 mx-auto">
+
+        <p>I’m going over <strong>Chapter 5</strong> in Casella and Berger’s (CB) “Statistical Inference”, specifically <strong>Section 5.5: Convergence Concepts</strong>, and wanted to document the topic of <a href="https://en.wikipedia.org/wiki/Convergence_of_random_variables#Convergence_in_probability">convergence in probability</a> with some plots demonstrating the concept.</p>
+
+<p>From CB, we have the definition of <em>convergence in probability</em>: a sequence of random variables <script type="math/tex">X_{1}, X_{2}, ... X_{n}</script> converges in probability to a random variable <script type="math/tex">X</script>, if for every <script type="math/tex">\epsilon > 0</script>,</p>
+
+<script type="math/tex; mode=display">\begin{align}
+\lim_{n \to \infty} P(| X_{n} - X | \geq \epsilon) = 0 \\
+\end{align}</script>
+
+<p>Intuitively, this means that, if we have some random variable <script type="math/tex">X_{k}</script> and another random variable <script type="math/tex">X</script>, the absolute difference between <script type="math/tex">X_{k}</script> and <script type="math/tex">X</script> gets smaller and smaller as <script type="math/tex">k</script> increases.  The probability that this difference exceeds some value, <script type="math/tex">\epsilon</script>, shrinks to zero as <script type="math/tex">k</script> tends towards infinity.  Using <em>convergence in probability</em>, we can derive the <a href="https://en.wikipedia.org/wiki/Law_of_large_numbers#Weak_law">Weak Law of Large Numbers</a> (WLLN):</p>
+
+<script type="math/tex; mode=display">\begin{align}
+\lim_{n \to \infty} P(|\bar{X}_{n} - \mu | \geq \epsilon) = 0
+\end{align}</script>
+
+<p>which we can take to mean that the sample mean converges in probability to the population mean as the sample size goes to infinity.  If we have finite variance (that is <script type="math/tex">% <![CDATA[
+Var(X) < \infty %]]></script>), we can prove this using Chebyshev’s Law</p>
+
+<script type="math/tex; mode=display">% <![CDATA[
+\begin{align}
+ &= P(|\bar{X}_{n} - \mu | \geq \epsilon) \\
+ &= P((\bar{X}_{n} - \mu)^{2} \geq \epsilon^{2}) \leq \frac{E\Big[(\bar{X}_{n} - \mu)^{2}\Big]}{\epsilon^{2}} \\
+ &= P((\bar{X}_{n} - \mu)^{2} \geq \epsilon^{2}) \leq \frac{Var(\bar{X_{n}})}{\epsilon^{2}} \\
+ &= P((\bar{X}_{n} - \mu)^{2} \geq \epsilon^{2}) \leq \frac{\sigma^{2}}{n^{2}\epsilon^{2}}
+\end{align} %]]></script>
+
+<p>where <script type="math/tex">\frac{\sigma^{2}}{n^{2} \epsilon^{2}} \rightarrow 0</script> as <script type="math/tex">n \rightarrow \infty</script>.  Intuitively, this means, that the sample mean converges to the population mean – and the probability that their difference is larger than some value is bounded by the variance of the estimator.  Because we showed that the variance of the estimator (right hand side) shrinks to zero, we can show that the difference between the sample mean and population mean converges to zero.</p>
+
+<p>We can also show a similar WLLN result for the sample variance using Chebyshev’s Inequality, as:</p>
+
+<script type="math/tex; mode=display">\begin{align}
+S_{n}^{2} = \frac{1}{n-1} \sum_{i=1}^{n} (X_{i} - \bar{X}_{n})^{2}
+\end{align}</script>
+
+<p>using the unbiased estimator, <script type="math/tex">S_{n}^{2}</script>, of <script type="math/tex">\sigma^{2}</script> as follows:</p>
+
+<script type="math/tex; mode=display">\begin{align}
+P(|S_{n}^{2} - \sigma^{2}| \geq \epsilon) \leq \frac{E\Big[(S_{n}^{2} - \sigma^{2})^{2}\Big]}{\epsilon^{2}} = \frac{Var(S_{n}^{2})}{\epsilon^{2}}
+\end{align}</script>
+
+<p>so all we need to do is show that <script type="math/tex">Var(S_{n}^{2}) \rightarrow 0</script> as <script type="math/tex">n \rightarrow \infty</script>.</p>
+
+<p>Let’s have a look at some (simple) real-world examples.  We’ll start by sampling from a <script type="math/tex">N(0,1)</script> distribution, and compute the sample mean and variance using their unbiased estimators.</p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1"># Import numpy and scipy libraries
+</span><span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="n">np</span>
+<span class="kn">from</span> <span class="nn">scipy.stats</span> <span class="kn">import</span> <span class="n">norm</span>
+
+<span class="o">%</span><span class="n">matplotlib</span> <span class="n">inline</span>
+<span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="k">as</span> <span class="n">plt</span>
+
+<span class="n">plt</span><span class="o">.</span><span class="n">rc</span><span class="p">(</span><span class="s">'text'</span><span class="p">,</span> <span class="n">usetex</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+</code></pre></div></div>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1"># Generate set of samples sizes
+</span><span class="n">samples</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">([</span><span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">105</span><span class="p">,</span> <span class="mi">5</span><span class="p">),</span> 
+                          <span class="mi">10</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">10</span><span class="p">,</span> <span class="mi">110</span><span class="p">,</span> <span class="mi">10</span><span class="p">),</span>
+                         <span class="mi">100</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">10</span><span class="p">,</span> <span class="mi">210</span><span class="p">,</span> <span class="mi">10</span><span class="p">)])</span>
+
+<span class="c1"># number of repeated samplings for each sample size
+</span><span class="n">iterations</span> <span class="o">=</span> <span class="mi">500</span>
+
+<span class="c1"># store sample mean and variance
+</span><span class="n">means</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">iterations</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">samples</span><span class="p">)))</span>
+<span class="n">vsrs</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">iterations</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">samples</span><span class="p">)))</span>
+
+<span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">iterations</span><span class="p">):</span>
+    <span class="k">for</span> <span class="n">j</span><span class="p">,</span> <span class="n">s</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">samples</span><span class="p">):</span>
+        
+        <span class="c1"># generate samples from N(0,1) distribution
+</span>        <span class="n">N</span> <span class="o">=</span> <span class="n">norm</span><span class="o">.</span><span class="n">rvs</span><span class="p">(</span><span class="n">loc</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">scale</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span><span class="n">s</span><span class="p">)</span>
+        <span class="n">mu</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">N</span><span class="p">)</span>
+        
+        <span class="c1"># unbiased estimate of variance
+</span>        <span class="n">vr</span> <span class="o">=</span> <span class="p">((</span><span class="n">N</span> <span class="o">-</span> <span class="n">mu</span><span class="p">)</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span><span class="o">.</span><span class="nb">sum</span><span class="p">()</span><span class="o">/</span><span class="p">(</span><span class="n">s</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+
+        <span class="n">means</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="n">j</span><span class="p">]</span> <span class="o">=</span> <span class="n">mu</span>
+        <span class="n">vsrs</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="n">j</span><span class="p">]</span> <span class="o">=</span> <span class="n">vr</span>
+</code></pre></div></div>
+
+<p>Let’s have a look at the sample means and variances as a function of the sample size.  Empirically, we see that both the sample mean and variance estimates converge to their population parameters, 0 and 1.</p>
+
+<figure>
+    <img src="/img/convergence/WLLN_Mean.jpg" class="center-image" />
+    <figcaption>Sample mean estimates as a function of sample size.</figcaption>
+</figure>
+
+<figure>
+    <img src="/img/convergence/WLLN_Variance.jpg" class="center-image" />
+    <figcaption>Sample variance estimates as a function of sample size.</figcaption>
+</figure>
+
+<p>Below is a simple method to compute the empirical probability that an estimate exceeds the epsilon threshold.</p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">def</span> <span class="nf">ecdf</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">pparam</span><span class="p">,</span> <span class="n">epsilon</span><span class="p">):</span>
+    
+    <span class="s">"""
+    Compute empirical probability P( |estimate - pop-param| &lt; epsilon).
+    
+    Parameters:
+    - - - - -
+    data: array, float
+        array of samples
+    pparam: float
+        true population parameter
+    epsilon: float
+        threshold value
+    """</span>
+    
+    <span class="n">compare</span> <span class="o">=</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="nb">abs</span><span class="p">(</span><span class="n">data</span> <span class="o">-</span> <span class="n">pparam</span><span class="p">)</span> <span class="o">&lt;</span> <span class="n">epsilon</span><span class="p">)</span>
+    <span class="n">prob</span> <span class="o">=</span> <span class="n">compare</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+    
+    <span class="k">return</span> <span class="n">prob</span>
+</code></pre></div></div>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1"># test multiple epsilon thresholds
+</span><span class="n">e</span> <span class="o">=</span> <span class="p">[</span><span class="mf">0.9</span><span class="p">,</span> <span class="mf">0.75</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">,</span> <span class="mf">0.25</span><span class="p">,</span> <span class="mf">0.1</span><span class="p">,</span> <span class="mf">0.05</span><span class="p">,</span> <span class="mf">0.01</span><span class="p">]</span>
+
+<span class="n">mean_probs</span> <span class="o">=</span> <span class="p">[]</span>
+<span class="n">vrs_probs</span> <span class="o">=</span> <span class="p">[]</span>
+<span class="c1"># compute empirical probabilities at each threshold
+</span><span class="k">for</span> <span class="n">E</span> <span class="ow">in</span> <span class="n">e</span><span class="p">:</span>
+    <span class="n">mean_probs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="n">ecdf</span><span class="p">(</span><span class="n">means</span><span class="p">,</span> <span class="n">pparam</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">epsilon</span><span class="o">=</span><span class="n">E</span><span class="p">))</span>
+    <span class="n">vrs_probs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="mi">1</span><span class="o">-</span><span class="n">ecdf</span><span class="p">(</span><span class="n">vsrs</span><span class="p">,</span> <span class="n">pparam</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">epsilon</span><span class="o">=</span><span class="n">E</span><span class="p">))</span>
+</code></pre></div></div>
+
+<figure>
+    <img src="/img/convergence/ECDF_Mean.jpg" class="center-image" />
+    <figcaption>Empirical probability that mean estimate exceeds population mean by epsilon. </figcaption>
+</figure>
+
+<figure>
+    <img src="/img/convergence/ECDF_Variance.jpg" class="center-image" />
+    <figcaption>Empirical probability that variance estimate exceeds population variance by epsilon.</figcaption>
+</figure>
+
+<p>The above plots show that, as sample size increases, the mean estimator and variance estimator both converge to their true population parameters.  Likewise, examining the empirical probability plots, we can see that the probability that either estimate exceeds the epsilon thresholds shrinks to zero as the sample size increases.</p>
+
+<p>If we wish to consider a stronger degree of convergence, we can consider <em>convergence almost surely</em>, which says the following:</p>
+
+<script type="math/tex; mode=display">\begin{align}
+P(\lim_{n \to \infty} |X_{n} - X| \geq \epsilon) = 0 \\
+\end{align}</script>
+
+<p>which considers the entire joint distribution of estimates <script type="math/tex">( X_{1}, X_{2}...X_{n}, X)</script>, rather than all pairwise estimates <script type="math/tex">(X_{1},X), (X_{2},X)... (X_{n},X)</script> – the entire set of estimates must converge to <script type="math/tex">X</script> as the sample size approaches infinity.</p>
+
+
+        <hr>
+
+        <div class="clearfix">
+
+          
+          <a class="btn btn-primary float-left" href="/2018/11/poisson-multinomial" data-toggle="tooltip" data-placement="top" title="Relationship Between Poisson and Multinomial">&larr; Previous<span class="d-none d-md-inline">
+              Post</span></a>
+          
+          
+          <a class="btn btn-primary float-right" href="/2018/12/mahalanobis" data-toggle="tooltip" data-placement="top" title="Mahalanobis Distance: A Distributional Exploration of Brain Connectivity">Next<span class="d-none d-md-inline">
+              Post</span> &rarr;</a>
+          
+
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+
+  <!-- Footer -->
+
+<hr>
+
+<footer>
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-8 col-md-10 mx-auto">
+                <ul class="list-inline text-center">
+                    
+                    <li class="list-inline-item">
+                        <a href="mailto:keschenb@uw.edu">
+                            <span class="fa-stack fa-lg">
+                                <i class="fas fa-circle fa-stack-2x"></i>
+                                <i class="far fa-envelope fa-stack-1x fa-inverse"></i>
+                            </span>
+                        </a>
+                    </li>
+                    
+                    
+                    <li class="list-inline-item">
+                        <a href="https://twitter.com/keschh">
+                            <span class="fa-stack fa-lg">
+                                <i class="fas fa-circle fa-stack-2x"></i>
+                                <i class="fab fa-twitter fa-stack-1x fa-inverse"></i>
+                            </span>
+                        </a>
+                    </li>
+                    
+                    
+                    
+                    <li class="list-inline-item">
+                        <a href="https://www.linkedin.com/in/kristianeschenburg">
+                            <span class="fa-stack fa-lg">
+                                <i class="fas fa-circle fa-stack-2x"></i>
+                                <i class="fab fa-linkedin fa-stack-1x fa-inverse"></i>
+                            </span>
+                        </a>
+                    </li>
+                    
+                    
+                    <li class="list-inline-item">
+                        <a href="https://github.com/kristianeschenburg">
+                            <span class="fa-stack fa-lg">
+                                <i class="fas fa-circle fa-stack-2x"></i>
+                                <i class="fab fa-github fa-stack-1x fa-inverse"></i>
+                            </span>
+                        </a>
+                    </li>
+                    
+                </ul>
+                <p class="copyright text-muted">Copyright &copy; Kristian M. Eschenburg 2020</p>
+            </div>
+        </div>
+    </div>
+</footer>
+
+  
+<script type="text/javascript" async src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-MML-AM_CHTML">
+</script>
+
+
+<script src="/assets/vendor/jquery/jquery.min.js"></script>
+<script src="/assets/vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
+<script src="/assets/vendor/startbootstrap-clean-blog/js/clean-blog.min.js"></script>
+
+<script src="/assets/scripts.js"></script>
+
+
+
+</body>
+
+</html>
