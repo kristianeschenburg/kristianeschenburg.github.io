@@ -1,6 +1,6 @@
 language: ruby
 rvm:
-- 2.6
+- 2.6.5
 install:
 - bundle install
 deploy:
