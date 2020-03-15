@@ -111,7 +111,7 @@
 \lim_{n \to \infty} P(| X_{n} - X | \geq \epsilon) = 0 \\
 \end{align}</script>
 
-<p>Intuitively, this means that, if we have some random variable <script type="math/tex">X_{k}</script> and another random variable $X$, the absolute difference between <script type="math/tex">X_{k}</script> and $X$ gets smaller and smaller as <script type="math/tex">k</script> increases.  The probability that this difference exceeds some value, <script type="math/tex">\epsilon</script>, shrinks to zero as <script type="math/tex">k</script> tends towards infinity.  Using <em>convergence in probability</em>, we can derive the <a href="https://en.wikipedia.org/wiki/Law_of_large_numbers#Weak_law">Weak Law of Large Numbers</a> (WLLN):</p>
+<p>Intuitively, this means that, if we have some random variable <script type="math/tex">X_{k}</script> and another random variable <script type="math/tex">X</script>, the absolute difference between <script type="math/tex">X_{k}</script> and <script type="math/tex">X</script> gets smaller and smaller as <script type="math/tex">k</script> increases.  The probability that this difference exceeds some value, <script type="math/tex">\epsilon</script>, shrinks to zero as <script type="math/tex">k</script> tends towards infinity.  Using <em>convergence in probability</em>, we can derive the <a href="https://en.wikipedia.org/wiki/Law_of_large_numbers#Weak_law">Weak Law of Large Numbers</a> (WLLN):</p>
 
 <script type="math/tex; mode=display">\begin{align}
 \lim_{n \to \infty} P(|\bar{X}_{n} - \mu | \geq \epsilon) = 0
@@ -136,15 +136,15 @@ Var(X) < \infty %]]></script>), we can prove this using Chebyshev’s Law</p>
 S_{n}^{2} = \frac{1}{n-1} \sum_{i=1}^{n} (X_{i} - \bar{X}_{n})^{2}
 \end{align}</script>
 
-<p>using the unbiased estimator, <script type="math/tex">S_{n}^{2}$, of $\sigma^{2}</script> as follows:</p>
+<p>using the unbiased estimator, <script type="math/tex">S_{n}^{2}</script>, of <script type="math/tex">\sigma^{2}</script> as follows:</p>
 
 <script type="math/tex; mode=display">\begin{align}
 P(|S_{n}^{2} - \sigma^{2}| \geq \epsilon) \leq \frac{E\Big[(S_{n}^{2} - \sigma^{2})^{2}\Big]}{\epsilon^{2}} = \frac{Var(S_{n}^{2})}{\epsilon^{2}}
 \end{align}</script>
 
-<p>so all we need to do is show that <script type="math/tex">Var(S_{n}^{2}) \rightarrow 0$ as $n \rightarrow \infty</script>.</p>
+<p>so all we need to do is show that <script type="math/tex">Var(S_{n}^{2}) \rightarrow 0</script> as <script type="math/tex">n \rightarrow \infty</script>.</p>
 
-<p>Let’s have a look at some (simple) real-world examples.  We’ll start by sampling from a <script type="math/tex">Normal(0,1)</script> distribution, and compute the sample mean and variance using their unbiased estimators.</p>
+<p>Let’s have a look at some (simple) real-world examples.  We’ll start by sampling from a <script type="math/tex">N(0,1)</script> distribution, and compute the sample mean and variance using their unbiased estimators.</p>
 
 <div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1"># Import numpy and scipy libraries
 </span><span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="n">np</span>
@@ -320,7 +320,7 @@ P(\lim_{n \to \infty} |X_{n} - X| \geq \epsilon) = 0 \\
                     </li>
                     
                 </ul>
-                <p class="copyright text-muted">Copyright &copy; Kristian M. Eschenburg 2019</p>
+                <p class="copyright text-muted">Copyright &copy; Kristian M. Eschenburg 2020</p>
             </div>
         </div>
     </div>
@@ -336,18 +336,6 @@ P(\lim_{n \to \infty} |X_{n} - X| \geq \epsilon) = 0 \\
 <script src="/assets/vendor/startbootstrap-clean-blog/js/clean-blog.min.js"></script>
 
 <script src="/assets/scripts.js"></script>
-
-
-
-  <!-- Global site tag (gtag.js) - Google Analytics -->
-<script async src="https://www.googletagmanager.com/gtag/js?id="></script>
-<script>
-  window.dataLayer = window.dataLayer || [];
-  function gtag(){dataLayer.push(arguments);}
-  gtag('js', new Date());
-
-  gtag('config', '');
-</script>
 
 
 

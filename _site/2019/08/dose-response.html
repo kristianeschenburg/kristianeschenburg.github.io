@@ -13,7 +13,7 @@
     </title>
 
     <meta name="description"
-        content="The other day, one of my friends and fellow PhD colleagues (I’ll refer to him as Dr. A) asked me if I knew anything about assessing biomarker diagnostic powe...">
+        content="The other day, one of my friends and colleagues (I’ll refer to him as “Dr. A”) asked me if I knew anything about assessing biomarker diagnostic power. He wen...">
 
     <link href='https://fonts.googleapis.com/css?family=Lora:400,700,400italic,700italic' rel='stylesheet'
         type='text/css'>
@@ -103,7 +103,7 @@
     <div class="row">
       <div class="col-lg-8 col-md-10 mx-auto">
 
-        <p>The other day, one of my friends and fellow PhD colleagues (I’ll refer to him as <strong>Dr. A</strong>) asked me if I knew anything about assessing biomarker diagnostic power.  He went on to describe his clinical problem.  I’ll try to describe his research problem here (but will likely mess up some of the relevant details, as his research pertains to generating induced pluripotent cardiac stem cells, which I have little to no experience with):</p>
+        <p>The other day, one of my friends and colleagues (I’ll refer to him as “Dr. A”) asked me if I knew anything about assessing biomarker diagnostic power.  He went on to describe his clinical problem, which I’ll try to recant here (but will likely mess up some of the relevant detail – his research pertains to generating induced pluripotent cardiac stem cells, which I have little to no experience with):</p>
 
 <ul>
   <li><strong>Dr. A</strong>:
@@ -116,16 +116,14 @@
       </li>
     </ul>
   </li>
-  <li><strong>Me</strong>:
-  “Sure!”</li>
 </ul>
 
-<p>What follows will be my exploration into what <strong>Dr. A</strong> called <a href="https://en.wikipedia.org/wiki/Dose%E2%80%93response_relationship">dose-response curves</a>, and my approach on how to use these curves to assess biomarker diagnostic power.  I’ll do a walk through of some Python code that I’ve written up, where I’ll examine dose-response curves and their diagnostic power using the <strong>receiver operating characteristic</strong> (<a href="https://en.wikipedia.org/wiki/Receiver_operating_characteristic">ROC</a>) and the closely related <strong>area under the curve</strong> (<a href="https://en.wikipedia.org/wiki/Receiver_operating_characteristic#Area_under_the_curve">AUC</a>) metrics.</p>
+<p>What follows will be my exploration into what Dr. A called <a href="https://en.wikipedia.org/wiki/Dose%E2%80%93response_relationship">dose-response curves</a>, and my approach on how to use these curves to assess biomarker diagnostic power.  I’ll do a walk through of some Python code that I’ve written up, where I’ll examine dose-response curves and their diagnostic power using the <strong>receiver operating characteristic</strong> (<a href="https://en.wikipedia.org/wiki/Receiver_operating_characteristic">ROC</a>) and the closely related <strong>area under the curve</strong> (<a href="https://en.wikipedia.org/wiki/Receiver_operating_characteristic#Area_under_the_curve">AUC</a>) metrics.</p>
 
 <p>If you want to see the actual dose-response curve analysis, skip to the <strong>Analyzing Synthetic Dose-Response Curves</strong> section down below.</p>
 
 <h3 id="brief-introduction-to-the-roc-and-auc">Brief Introduction to the ROC and AUC</h3>
-<p>I first wanted to describe to <strong>Dr. A</strong> how to use the ROC for biomarkers, so I made a brief Python tutorial for him to look at.  Below begins a more in-depth description of what I sent him.</p>
+<p>I first wanted to describe to Dr. A how to use the ROC for biomarkers, so I made a brief Python tutorial for him to look at.  Below begins a more in-depth description of what I sent him.</p>
 
 <p>We start by importing some necessary libraries:</p>
 <div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="o">%</span><span class="n">matplotlib</span> <span class="n">inline</span>
@@ -459,7 +457,7 @@ I_{Case} &\sim Normal(\mu=4, \sigma=1)
 
 <p>This is where my limited domain knowledge comes at a cost – I’m not sure if the biomarkers I’ve chosen (i.e. incremental <strong>ec</strong> values) are actually biologically relevant.  The point, however, is that each biomarker yields a different AUC, which theoretically shows that the Cases and Controls can be differentially distinguished, depending on which biomarker we choose to examine.  In this case, <strong>ec10</strong> has the most discriminative diagnostic power.</p>
 
-<p>Something I did wonder about while exploring this data was how dependent the ROC curves and AUC statistics are on sample size.  Previously, I’d looked at rates of convergence of various estimators – the AUC should also theoretically show some convergence to a “true” value as $n$ increases – but I’m not sure if it follows any sort of relevant distribution.  I imagine the AUC is domain-dependent, in that it depends on the distribution of the biomarker of interest?  Might be a good idea for another post…</p>
+<p>Something I did wonder about while exploring this data was how dependent the ROC curves and AUC statistics are on sample size.  Previously, I’d looked at rates of convergence of various estimators – the AUC should also theoretically show some convergence to a “true” value as <script type="math/tex">n</script> increases – but I’m not sure if it follows any sort of relevant distribution.  I imagine the AUC is domain-dependent, in that it depends on the distribution of the biomarker of interest?  Might be a good idea for another post…</p>
 
 <p>Cheers.</p>
 
@@ -532,7 +530,7 @@ I_{Case} &\sim Normal(\mu=4, \sigma=1)
                     </li>
                     
                 </ul>
-                <p class="copyright text-muted">Copyright &copy; Kristian M. Eschenburg 2019</p>
+                <p class="copyright text-muted">Copyright &copy; Kristian M. Eschenburg 2020</p>
             </div>
         </div>
     </div>
@@ -548,18 +546,6 @@ I_{Case} &\sim Normal(\mu=4, \sigma=1)
 <script src="/assets/vendor/startbootstrap-clean-blog/js/clean-blog.min.js"></script>
 
 <script src="/assets/scripts.js"></script>
-
-
-
-  <!-- Global site tag (gtag.js) - Google Analytics -->
-<script async src="https://www.googletagmanager.com/gtag/js?id="></script>
-<script>
-  window.dataLayer = window.dataLayer || [];
-  function gtag(){dataLayer.push(arguments);}
-  gtag('js', new Date());
-
-  gtag('config', '');
-</script>
 
 
 

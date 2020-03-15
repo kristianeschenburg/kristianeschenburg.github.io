@@ -5,6 +5,8 @@ date: 2018-12-07 05:12:32
 math: true
 published: True
 mathjax: true
+pagination: 
+    enabled: true
 paginate_path: "/Posts/page:num/"
 ---
 

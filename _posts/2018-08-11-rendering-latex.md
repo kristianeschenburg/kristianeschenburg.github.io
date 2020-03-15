@@ -4,6 +4,8 @@ layout: post
 date: 2018-08-11 02:14:14
 math: true
 categories: jekyll update
+pagination: 
+    enabled: true
 paginate_path: "/Posts/page:num/"
 ---
 

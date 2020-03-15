@@ -5,6 +5,8 @@ date: 2018-05-22 14:02:52
 math: true
 categories: jekyll update
 mathjax: true
+pagination: 
+    enabled: true
 paginate_path: "/Posts/page:num/"
 ---
 

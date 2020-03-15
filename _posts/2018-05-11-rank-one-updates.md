@@ -5,6 +5,8 @@ math: true
 date: 2018-05-11 16:53:45
 categories: jekyll update
 mathjax: true
+pagination: 
+    enabled: true
 paginate_path: "/Posts/page:num/"
 ---
 
@@ -65,7 +67,7 @@ X \\
 v
 \end{bmatrix} \in R^{(n+1) \times p}$$
 
-and directly compute $$(X^{\text{\*}T}X^{\text{\*}})^{-1}$$, **or** we can use the Sherman-Morrison-Woodbury theorem:
+and directly compute $$(X^{\text{\\*}T}X^{\text{\\*}})^{-1}$$, **or** we can use the Sherman-Morrison-Woodbury theorem:
 
 $$\begin{align}
 (X^{\text{*}T}X^{\text{*}})^{-1} = (X^{T}X + vv^{T})^{-1} = (X^{T}X)^{-1} - \frac{(X^{T}X)^{-1}vv^{T}(X^{T}X)^{-1}}{1+v^{T}(X^{T}X)^{-1}v} \\

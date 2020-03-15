@@ -13,7 +13,7 @@
     </title>
 
     <meta name="description"
-        content="My exploration of neuroscience, algorithms, and statistics.">
+        content="neuroscience, algorithms, and statistics">
 
     <link href='https://fonts.googleapis.com/css?family=Lora:400,700,400italic,700italic' rel='stylesheet'
         type='text/css'>
@@ -78,8 +78,8 @@
 
   <!-- Page Header -->
 
-<header class="masthead" style="background-image: url('/img/blog/Bayes.jpg')">
-  
+  <header class="masthead">
+    
     <div class="overlay"></div>
     <div class="container">
       <div class="row">
@@ -100,20 +100,26 @@
       <div class="col-lg-8 col-md-10 mx-auto">
 
         <h3 id="code-packages">Code Packages</h3>
-<p><a href="https://github.com/kristianeschenburg/statsni"><strong>statsni</strong></a>:  Python implementations of various multivariate statistical tests.  Constantly growing as I find the need / desire to learn about new methods.</p>
 
-<p><a href="https://github.com/kristianeschenburg/ptx3"><strong>probtrackx3</strong></a>: C++ package containing modifications to the <a href="https://fsl.fmrib.ox.ac.uk/fsl/fslwiki/FDT/UserGuide#PROBTRACKX_-_probabilistic_tracking_with_crossing_fibres">FSL probtrackx2</a> probabilistic fiber tracking algorithm for diffusion MRI.<br />
-      – these modifications have not been endorsed by and did not involve <a href="https://fsl.fmrib.ox.ac.uk/fsl/fslwiki">FSL</a></p>
+<p><a href="https://github.com/kristianeschenburg/respect">respect</a>:  Python package to perform recursive, binary partitioning via thresholding of the Laplacian Feidler vector.</p>
 
-<p><a href="https://kristianeschenburg.github.io/ddCRP/"><strong>ddCRP</strong></a>: Python package for fitting distance-dependent Chinese Restaurant Process models</p>
+<p><a href="https://github.com/kristianeschenburg/submet">submet</a>:  Python package to compute various distances and metrics between equi-dimensional subspaces.  Metrics include: Asimov, Binet-Cauchy, Chordal, Fubini-Study, Grassmann, Martin, Procrustes, Projection, and Spectral.</p>
 
-<p><a href="https://github.com/kristianeschenburg/meshica"><strong>meshica</strong></a>:  Python wrappers and implementations of <a href="https://arxiv.org/abs/0911.4650">Canonical ICA</a> (CanICA) and <a href="https://www.ncbi.nlm.nih.gov/pmc/articles/PMC4289914/">MELODIC’s Iterative Group PCA</a> (MIGP) algorithms for time-series data sampled on a mesh</p>
+<p><a href="https://github.com/kristianeschenburg/fieldmodel">fieldmodel</a>:  Python package to fit brain connectivity field models (as originally described <a href="https://www.spinozacentre.nl/dumoulin/PDFs/Haak-NI-2013.pdf">here</a>).  I provide methods to fit Geodesic field models (on a manifold) and Connective field models (original implementation in 3D-voxel space), along with the option to fit either Gaussian or Student’s T densities.</p>
 
-<p><a href="https://kristianeschenburg.github.io/niio/"><strong>niio</strong></a>:  Python package for quickly loading and writing neuroimaging data in GIFTI format</p>
+<p><a href="https://github.com/kristianeschenburg/statsni">statsni</a>:  Python implementations of various multivariate statistical tests.  Constantly growing as I find the need / desire to learn about new methods.</p>
 
-<p><a href="https://kristianeschenburg.github.io/parcellation_fragmenter/"><strong>parcellation_fragmenter</strong></a>:  Python package for fragmenting annotation and label files into parameterized number of clusters.  Useful for feature extraction and generating null models of cortical maps.</p>
+<p><a href="https://github.com/kristianeschenburg/ptx3">probtrackx3</a>: C++ package containing modifications to the <a href="https://fsl.fmrib.ox.ac.uk/fsl/fslwiki/FDT/UserGuide#PROBTRACKX_-_probabilistic_tracking_with_crossing_fibres">FSL probtrackx2</a> probabilistic fiber tracking algorithm for diffusion MRI.  <strong>These modifications have not been endorsed by and did not involve <a href="https://fsl.fmrib.ox.ac.uk/fsl/fslwiki">FSL</a>.</strong></p>
 
-<p><a href="https://github.com/kristianeschenburg/surface_utilities"><strong>surface_utilities</strong></a>: Package for quickly processing surface meshes and cortical maps to generate adjacency lists and graphs.</p>
+<p><a href="https://kristianeschenburg.github.io/ddCRP/">ddCRP</a>: Python package for fitting distance-dependent Chinese Restaurant Process models</p>
+
+<p><a href="https://github.com/kristianeschenburg/meshica">meshica</a>:  Python wrappers and implementations of <a href="https://arxiv.org/abs/0911.4650">Canonical ICA</a> (CanICA) and <a href="https://www.ncbi.nlm.nih.gov/pmc/articles/PMC4289914/">MELODIC’s Iterative Group PCA</a> (MIGP) algorithms for time-series data sampled on a mesh</p>
+
+<p><a href="https://kristianeschenburg.github.io/niio/">niio</a>:  Python package for quickly loading and writing neuroimaging data in GIFTI format</p>
+
+<p><a href="https://kristianeschenburg.github.io/parcellation_fragmenter/">parcellation_fragmenter</a>:  Python package for fragmenting annotation and label files into parameterized number of clusters.  Useful for feature extraction and generating null models of cortical maps.</p>
+
+<p><a href="https://github.com/kristianeschenburg/surface_utilities">surface_utilities</a>: Package for quickly processing surface meshes and cortical maps to generate adjacency lists and graphs.</p>
 
 
 
@@ -173,7 +179,7 @@
                     </li>
                     
                 </ul>
-                <p class="copyright text-muted">Copyright &copy; Kristian M. Eschenburg 2019</p>
+                <p class="copyright text-muted">Copyright &copy; Kristian M. Eschenburg 2020</p>
             </div>
         </div>
     </div>
@@ -186,18 +192,6 @@
 <script src="/assets/vendor/startbootstrap-clean-blog/js/clean-blog.min.js"></script>
 
 <script src="/assets/scripts.js"></script>
-
-
-
-  <!-- Global site tag (gtag.js) - Google Analytics -->
-<script async src="https://www.googletagmanager.com/gtag/js?id="></script>
-<script>
-  window.dataLayer = window.dataLayer || [];
-  function gtag(){dataLayer.push(arguments);}
-  gtag('js', new Date());
-
-  gtag('config', '');
-</script>
 
 
 

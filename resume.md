@@ -3,7 +3,6 @@ layout: page
 title: Resume
 description: The root of what I'm working on
 permalink: /resume
-background: '/img/blog/dendrochronography.png'
 ---
 
 ### Publications
@@ -32,9 +31,6 @@ background: '/img/blog/dendrochronography.png'
         - Interfacing directly with lead scientists and developers in the Seattle Biotechnology industry to build meaningful research collaborations between biotech companies and the University of Washington Bioengineering program.  I'm managing a team of PhD, Masters, and Undergraduate students to bring financial value to industry partners and career opportunities to UW students.
   2. Statistical Consultant (2019-Present):
         - I'm working with companies in the Seattle Biotechnology sector to provide statistical guidance in answering their research questions.  Experience thus far includes experimental design, data analysis, and data visualization for [Silene Biotech](https://www.silenebiotech.com/) to identify biomarkers related to cardiotoxicity in cancer treatment.
-
-
-(background image courtesy of [Pedro Cruz](https://web.northeastern.edu/naturalizing-immigration-dataviz/))
 
 
 [jekyll-organization]: https://github.com/jekyll

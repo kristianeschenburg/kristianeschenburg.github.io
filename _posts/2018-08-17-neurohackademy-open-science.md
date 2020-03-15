@@ -4,6 +4,8 @@ layout: post
 draft: true
 date: 2018-08-17 01:12:33
 math: true
+pagination: 
+    enabled: true
 paginate_path: "/Posts/page:num/"
 ---
 

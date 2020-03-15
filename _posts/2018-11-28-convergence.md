@@ -6,6 +6,8 @@ math: true
 published: true
 tags: [convergence, probability, almost-surely]
 mathjax: true
+pagination: 
+    enabled: true
 paginate_path: "/Posts/page:num/"
 ---
 
@@ -17,7 +19,7 @@ $$\begin{align}
 \lim_{n \to \infty} P(| X_{n} - X | \geq \epsilon) = 0 \\
 \end{align}$$
 
-Intuitively, this means that, if we have some random variable $$X_{k}$$ and another random variable $X$, the absolute difference between $$X_{k}$$ and $X$ gets smaller and smaller as $$k$$ increases.  The probability that this difference exceeds some value, $$\epsilon$$, shrinks to zero as $$k$$ tends towards infinity.  Using *convergence in probability*, we can derive the [Weak Law of Large Numbers](https://en.wikipedia.org/wiki/Law_of_large_numbers#Weak_law) (WLLN):
+Intuitively, this means that, if we have some random variable $$X_{k}$$ and another random variable $$X$$, the absolute difference between $$X_{k}$$ and $$X$$ gets smaller and smaller as $$k$$ increases.  The probability that this difference exceeds some value, $$\epsilon$$, shrinks to zero as $$k$$ tends towards infinity.  Using *convergence in probability*, we can derive the [Weak Law of Large Numbers](https://en.wikipedia.org/wiki/Law_of_large_numbers#Weak_law) (WLLN):
 
 $$\begin{align}
 \lim_{n \to \infty} P(|\bar{X}_{n} - \mu | \geq \epsilon) = 0
@@ -40,15 +42,15 @@ $$\begin{align}
 S_{n}^{2} = \frac{1}{n-1} \sum_{i=1}^{n} (X_{i} - \bar{X}_{n})^{2}
 \end{align}$$
 
-using the unbiased estimator, $$S_{n}^{2}$, of $\sigma^{2}$$ as follows:
+using the unbiased estimator, $$S_{n}^{2}$$, of $$\sigma^{2}$$ as follows:
 
 $$\begin{align}
 P(|S_{n}^{2} - \sigma^{2}| \geq \epsilon) \leq \frac{E\Big[(S_{n}^{2} - \sigma^{2})^{2}\Big]}{\epsilon^{2}} = \frac{Var(S_{n}^{2})}{\epsilon^{2}}
 \end{align}$$
 
-so all we need to do is show that $$Var(S_{n}^{2}) \rightarrow 0$ as $n \rightarrow \infty$$.
+so all we need to do is show that $$Var(S_{n}^{2}) \rightarrow 0$$ as $$n \rightarrow \infty$$.
 
-Let's have a look at some (simple) real-world examples.  We'll start by sampling from a $$Normal(0,1)$$ distribution, and compute the sample mean and variance using their unbiased estimators.
+Let's have a look at some (simple) real-world examples.  We'll start by sampling from a $$N(0,1)$$ distribution, and compute the sample mean and variance using their unbiased estimators.
 
 ```python
 # Import numpy and scipy libraries

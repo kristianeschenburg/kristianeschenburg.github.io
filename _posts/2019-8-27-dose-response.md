@@ -5,25 +5,24 @@ date: 2019-8-27 11:12:32
 math: true
 published: true
 mathjax: true
+pagination: 
+    enabled: true
 paginate_path: "/Posts/page:num/"
 ---
 
-The other day, one of my friends and fellow PhD colleagues (I'll refer to him as **Dr. A**) asked me if I knew anything about assessing biomarker diagnostic power.  He went on to describe his clinical problem.  I'll try to describe his research problem here (but will likely mess up some of the relevant details, as his research pertains to generating induced pluripotent cardiac stem cells, which I have little to no experience with):
+The other day, one of my friends and colleagues (I'll refer to him as "Dr. A") asked me if I knew anything about assessing biomarker diagnostic power.  He went on to describe his clinical problem, which I'll try to recant here (but will likely mess up some of the relevant detail -- his research pertains to generating induced pluripotent cardiac stem cells, which I have little to no experience with):
 
 - **Dr. A**:  
     - "So chemotherapy is meant to combat cancer.  But some clinicians, and their patients, have found that some forms of chemotherapy and anti-cancer drugs later result in problems with the heart and vasculature -- these problems are collectively referred to as 'cardiotoxicity'.  
     
     - We're interested in developing biomarkers that will help us identify which patients might be susceptible to cardiotoxicity, and in assessing the predictive power of these biomarkers.  Can you help me?"
 
-- **Me**:
-    "Sure!"
-
-What follows will be my exploration into what **Dr. A** called [dose-response curves](https://en.wikipedia.org/wiki/Dose%E2%80%93response_relationship), and my approach on how to use these curves to assess biomarker diagnostic power.  I'll do a walk through of some Python code that I've written up, where I'll examine dose-response curves and their diagnostic power using the **receiver operating characteristic** ([ROC](https://en.wikipedia.org/wiki/Receiver_operating_characteristic)) and the closely related **area under the curve** ([AUC](https://en.wikipedia.org/wiki/Receiver_operating_characteristic#Area_under_the_curve)) metrics.
+What follows will be my exploration into what Dr. A called [dose-response curves](https://en.wikipedia.org/wiki/Dose%E2%80%93response_relationship), and my approach on how to use these curves to assess biomarker diagnostic power.  I'll do a walk through of some Python code that I've written up, where I'll examine dose-response curves and their diagnostic power using the **receiver operating characteristic** ([ROC](https://en.wikipedia.org/wiki/Receiver_operating_characteristic)) and the closely related **area under the curve** ([AUC](https://en.wikipedia.org/wiki/Receiver_operating_characteristic#Area_under_the_curve)) metrics.
 
 If you want to see the actual dose-response curve analysis, skip to the **Analyzing Synthetic Dose-Response Curves** section down below.
 
 ### Brief Introduction to the ROC and AUC
-I first wanted to describe to **Dr. A** how to use the ROC for biomarkers, so I made a brief Python tutorial for him to look at.  Below begins a more in-depth description of what I sent him.
+I first wanted to describe to Dr. A how to use the ROC for biomarkers, so I made a brief Python tutorial for him to look at.  Below begins a more in-depth description of what I sent him.
 
 We start by importing some necessary libraries:
 ```python
@@ -372,6 +371,6 @@ If we select a different threshold -- i.e. instead of 0.5, we can iterate over t
 
 This is where my limited domain knowledge comes at a cost -- I'm not sure if the biomarkers I've chosen (i.e. incremental **ec** values) are actually biologically relevant.  The point, however, is that each biomarker yields a different AUC, which theoretically shows that the Cases and Controls can be differentially distinguished, depending on which biomarker we choose to examine.  In this case, **ec10** has the most discriminative diagnostic power.
 
-Something I did wonder about while exploring this data was how dependent the ROC curves and AUC statistics are on sample size.  Previously, I'd looked at rates of convergence of various estimators -- the AUC should also theoretically show some convergence to a "true" value as $n$ increases -- but I'm not sure if it follows any sort of relevant distribution.  I imagine the AUC is domain-dependent, in that it depends on the distribution of the biomarker of interest?  Might be a good idea for another post...
+Something I did wonder about while exploring this data was how dependent the ROC curves and AUC statistics are on sample size.  Previously, I'd looked at rates of convergence of various estimators -- the AUC should also theoretically show some convergence to a "true" value as $$n$$ increases -- but I'm not sure if it follows any sort of relevant distribution.  I imagine the AUC is domain-dependent, in that it depends on the distribution of the biomarker of interest?  Might be a good idea for another post...
 
 Cheers.
